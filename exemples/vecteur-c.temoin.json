@@ -1,0 +1,11 @@
+{
+  "format": 1,
+  "hachage": "sha-256",
+  "canonique": "{\"n\":3}",
+  "sel": "3333333333333333333333333333333333333333333333333333333333333333",
+  "chemin": [
+    { "cote": "gauche", "empreinte": "619d2265e7a293938e0caf3207c4015658312d78db8d24b8e11bbffd4d659f35" }
+  ],
+  "racine": "c6c5f4615cc9a453def6b0a1b6999de9528c194a102983475a3e7e84106ebe8e",
+  "attestations": []
+}

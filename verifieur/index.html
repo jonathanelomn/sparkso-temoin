@@ -1,0 +1,539 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vérifieur de témoin — états certifiés par ancrage public</title>
+<!--
+  Page auto-suffisante : aucun script externe, aucune police externe,
+  aucune requête réseau. Tout le calcul se fait dans le navigateur via
+  l'API Web Crypto — constatable dans l'onglet réseau des outils de
+  développement. Cette page se copie telle quelle dans n'importe quel
+  export statique.
+
+  Portée v1 (assumée) : la page recalcule l'empreinte de la feuille et le
+  chemin de Merkle jusqu'à la racine R, puis affiche « conforme à son
+  témoin ; racine R à constater dans le bloc B » avec un lien pré-rempli
+  vers un explorateur public. Le parsing complet de la preuve OTS en
+  navigateur est hors v1 : il se fait avec le client OpenTimestamps
+  officiel (la preuve .ots est téléchargeable depuis cette page).
+
+  Spécification : SPEC.md du dépôt sparkso-temoin (format du témoin v1).
+-->
+<style>
+  :root {
+    --fond: #ffffff; --encre: #1a1d21; --sourdine: #5b6470;
+    --cadre: #d5dae1; --panneau: #f5f7f9;
+    --ok: #1a7f37; --ok-fond: #e6f4ea;
+    --attente: #9a6700; --attente-fond: #fff8e1;
+    --echec: #b42318; --echec-fond: #fdecea;
+    --accent: #0b57d0; --mono-fond: #eef1f4;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --fond: #14171a; --encre: #e8eaed; --sourdine: #9aa3ad;
+      --cadre: #3a4048; --panneau: #1c2126;
+      --ok: #4ccb70; --ok-fond: #10301b;
+      --attente: #e2b93b; --attente-fond: #33290e;
+      --echec: #ff7a6e; --echec-fond: #3a1512;
+      --accent: #8ab4f8; --mono-fond: #22272c;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--fond); color: var(--encre);
+    font: 16px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  main { max-width: 46rem; margin: 0 auto; padding: 2rem 1rem 4rem; }
+  h1 { font-size: 1.5rem; margin: 0 0 .25rem; }
+  .sous-titre { color: var(--sourdine); margin: 0 0 1.5rem; }
+  .note { color: var(--sourdine); font-size: .875rem; }
+  code, .mono {
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: .8125rem; background: var(--mono-fond);
+    border-radius: 4px; padding: .05rem .3rem; overflow-wrap: anywhere;
+  }
+  .depot {
+    border: 2px dashed var(--cadre); border-radius: 10px;
+    padding: 1.5rem; text-align: center; cursor: pointer;
+    transition: border-color .15s, background .15s;
+  }
+  .depot.survol { border-color: var(--accent); background: var(--panneau); }
+  .depot p { margin: .25rem 0; }
+  textarea {
+    width: 100%; min-height: 7rem; margin-top: 1rem; padding: .6rem;
+    border: 1px solid var(--cadre); border-radius: 8px; resize: vertical;
+    background: var(--panneau); color: var(--encre);
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: .8125rem;
+  }
+  .actions { display: flex; gap: .6rem; flex-wrap: wrap; margin-top: .6rem; }
+  button {
+    font: inherit; padding: .45rem .9rem; border-radius: 8px; cursor: pointer;
+    border: 1px solid var(--cadre); background: var(--panneau); color: var(--encre);
+  }
+  button.principal { background: var(--accent); border-color: var(--accent); color: var(--fond); }
+  #resultat { margin-top: 2rem; }
+  .verdict { border-radius: 10px; padding: 1rem 1.2rem; margin-bottom: 1rem; }
+  .verdict h2 { margin: 0 0 .3rem; font-size: 1.1rem; }
+  .verdict p { margin: .2rem 0; }
+  .verdict.ok { background: var(--ok-fond); border: 1px solid var(--ok); }
+  .verdict.ok h2 { color: var(--ok); }
+  .verdict.attente { background: var(--attente-fond); border: 1px solid var(--attente); }
+  .verdict.attente h2 { color: var(--attente); }
+  .verdict.echec { background: var(--echec-fond); border: 1px solid var(--echec); }
+  .verdict.echec h2 { color: var(--echec); }
+  ol.etapes { padding-left: 1.4rem; margin: 1rem 0; }
+  ol.etapes li { margin: .45rem 0; }
+  .puce { font-weight: 600; }
+  .puce.ok { color: var(--ok); }
+  .puce.echec { color: var(--echec); }
+  .puce.neutre { color: var(--attente); }
+  details { margin: .75rem 0; border: 1px solid var(--cadre); border-radius: 8px; padding: .5rem .8rem; }
+  summary { cursor: pointer; font-weight: 600; }
+  pre {
+    background: var(--mono-fond); border-radius: 8px; padding: .7rem;
+    overflow-x: auto; font-size: .8125rem; line-height: 1.5;
+  }
+  a { color: var(--accent); }
+  .liens-bloc { display: flex; gap: .8rem; flex-wrap: wrap; margin-top: .4rem; }
+  hr { border: none; border-top: 1px solid var(--cadre); margin: 2rem 0; }
+  footer { margin-top: 2.5rem; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Vérifieur de témoin</h1>
+  <p class="sous-titre">États certifiés par ancrage public — format de témoin v1.</p>
+
+  <p class="note">
+    Tout le calcul se fait dans votre navigateur (API Web Crypto).
+    <strong>Rien n'est envoyé nulle part</strong> : vous pouvez le constater
+    dans l'onglet réseau de vos outils de développement, ou utiliser cette
+    page hors connexion.
+  </p>
+
+  <div id="zone-depot" class="depot" role="button" tabindex="0"
+       aria-label="Déposer ou choisir un fichier témoin JSON">
+    <p><strong>Déposez ici un témoin JSON</strong></p>
+    <p class="note">ou cliquez pour choisir un fichier</p>
+    <input id="fichier-temoin" type="file" accept=".json,application/json" hidden>
+  </div>
+
+  <textarea id="texte-temoin" spellcheck="false"
+    placeholder='…ou collez le témoin ici : { "format": 1, "hachage": "sha-256", … }'></textarea>
+
+  <div class="actions">
+    <button id="btn-verifier" class="principal">Vérifier</button>
+    <button id="btn-exemple" type="button">Charger l'exemple (vecteur C de la spec)</button>
+    <button id="btn-effacer" type="button">Effacer</button>
+  </div>
+
+  <section id="resultat" hidden></section>
+
+  <section id="section-donnees" hidden>
+    <hr>
+    <h2 style="font-size:1.1rem">Comparer aux données originales (facultatif)</h2>
+    <p class="note">
+      Le témoin transporte sa propre sérialisation canonique. Si vous détenez
+      le fichier scellé d'origine, déposez-le ici : la page exige alors
+      l'égalité stricte des octets avec le champ <code>canonique</code> du
+      témoin — cela lie le témoin aux données que vous détenez réellement.
+    </p>
+    <input id="fichier-donnees" type="file">
+    <p id="resultat-donnees"></p>
+  </section>
+
+  <footer class="note">
+    <p>
+      Un témoin valide prouve exactement : « ces octets existaient au plus
+      tard lorsque le bloc B a été miné ». Jamais « à telle date et heure » :
+      l'horodatage affiché d'un bloc Bitcoin tolère environ deux heures de
+      dérive.
+    </p>
+    <p>
+      Portée de cette page (v1) : elle recalcule l'empreinte et le chemin de
+      Merkle jusqu'à la racine R. Le contrôle complet de la preuve
+      OpenTimestamps (<code>.ots</code>, téléchargeable ci-dessus une fois le
+      témoin chargé) se fait avec le
+      <a href="https://opentimestamps.org/" rel="noopener">client OpenTimestamps officiel</a> —
+      l'outil d'un tiers, précisément pour ne pas avoir à nous croire.
+    </p>
+  </footer>
+</main>
+
+<script>
+'use strict';
+
+/* ---------- Outils octets ---------- */
+
+function hexVersOctets(hex, tailleAttendue, nomChamp) {
+  if (typeof hex !== 'string' || !/^[0-9a-f]*$/.test(hex) || hex.length % 2 !== 0) {
+    throw new Error(nomChamp + ' : hexadécimal minuscule attendu.');
+  }
+  const octets = new Uint8Array(hex.length / 2);
+  for (let i = 0; i < octets.length; i++) {
+    octets[i] = parseInt(hex.slice(2 * i, 2 * i + 2), 16);
+  }
+  if (tailleAttendue !== null && octets.length !== tailleAttendue) {
+    throw new Error(nomChamp + ' : ' + tailleAttendue + ' octets attendus, ' +
+      octets.length + ' reçus.');
+  }
+  return octets;
+}
+
+function octetsVersHex(octets) {
+  return Array.from(octets, o => o.toString(16).padStart(2, '0')).join('');
+}
+
+function concat(...morceaux) {
+  const total = morceaux.reduce((n, m) => n + m.length, 0);
+  const sortie = new Uint8Array(total);
+  let position = 0;
+  for (const m of morceaux) { sortie.set(m, position); position += m.length; }
+  return sortie;
+}
+
+function memesOctets(a, b) {
+  if (a.length !== b.length) return false;
+  let difference = 0;
+  for (let i = 0; i < a.length; i++) difference |= a[i] ^ b[i];
+  return difference === 0;
+}
+
+async function sha256(octets) {
+  return new Uint8Array(await crypto.subtle.digest('SHA-256', octets));
+}
+
+/* ---------- Vérification (SPEC.md §9) ---------- */
+
+const PREFIXE_FEUILLE = new Uint8Array([0x00]);
+const PREFIXE_NOEUD = new Uint8Array([0x01]);
+
+// Replie le chemin de Merkle (SPEC.md §6.1). `cote` est la position de
+// l'empreinte SŒUR, pas celle du nœud courant.
+async function repli(feuille, chemin) {
+  let courant = feuille;
+  for (let i = 0; i < chemin.length; i++) {
+    const maillon = chemin[i];
+    if (typeof maillon !== 'object' || maillon === null) {
+      throw new Error('chemin[' + i + '] : objet {cote, empreinte} attendu.');
+    }
+    const soeur = hexVersOctets(maillon.empreinte, 32, 'chemin[' + i + '].empreinte');
+    if (maillon.cote === 'gauche') {
+      courant = await sha256(concat(PREFIXE_NOEUD, soeur, courant));
+    } else if (maillon.cote === 'droite') {
+      courant = await sha256(concat(PREFIXE_NOEUD, courant, soeur));
+    } else {
+      throw new Error('chemin[' + i + '].cote : "gauche" ou "droite" attendu.');
+    }
+  }
+  return courant;
+}
+
+// Vérifie un témoin ; retourne { etapes, calcul, ancrage }.
+async function verifierTemoin(temoin) {
+  const etapes = [];
+  const calcul = {};
+
+  // Étape 1 — format.
+  if (temoin.format !== 1) {
+    etapes.push({ ok: false, texte: 'Format : "format" doit valoir 1 (reçu : ' +
+      JSON.stringify(temoin.format) + ').' });
+    return { etapes, calcul, ancrage: null };
+  }
+  if (temoin.hachage !== 'sha-256') {
+    etapes.push({ ok: false, texte: 'Format : "hachage" doit valoir "sha-256" (reçu : ' +
+      JSON.stringify(temoin.hachage) + ').' });
+    return { etapes, calcul, ancrage: null };
+  }
+  etapes.push({ ok: true, texte: 'Format reconnu : témoin v1, hachage sha-256.' });
+
+  // Étape 2 — empreinte de la feuille : h = H(0x00 ‖ sel ‖ canonique).
+  if (typeof temoin.canonique !== 'string') {
+    etapes.push({ ok: false, texte: 'Feuille : "canonique" doit être une chaîne.' });
+    return { etapes, calcul, ancrage: null };
+  }
+  let feuille;
+  try {
+    const sel = hexVersOctets(temoin.sel, 32, 'sel');
+    const canonique = new TextEncoder().encode(temoin.canonique);
+    feuille = await sha256(concat(PREFIXE_FEUILLE, sel, canonique));
+  } catch (erreur) {
+    etapes.push({ ok: false, texte: 'Feuille : ' + erreur.message });
+    return { etapes, calcul, ancrage: null };
+  }
+  calcul.feuille = octetsVersHex(feuille);
+  etapes.push({ ok: true,
+    texte: 'Empreinte de la feuille recalculée : H(0x00 ‖ sel ‖ canonique) = ',
+    code: calcul.feuille });
+
+  // Étape 3 — repli du chemin.
+  if (!Array.isArray(temoin.chemin)) {
+    etapes.push({ ok: false, texte: 'Chemin : "chemin" doit être un tableau.' });
+    return { etapes, calcul, ancrage: null };
+  }
+  let racineRecalculee;
+  try {
+    racineRecalculee = await repli(feuille, temoin.chemin);
+  } catch (erreur) {
+    etapes.push({ ok: false, texte: 'Chemin : ' + erreur.message });
+    return { etapes, calcul, ancrage: null };
+  }
+  calcul.racineRecalculee = octetsVersHex(racineRecalculee);
+  etapes.push({ ok: true,
+    texte: 'Chemin de Merkle replié (' + temoin.chemin.length +
+      (temoin.chemin.length > 1 ? ' maillons' : ' maillon') + ') : R′ = ',
+    code: calcul.racineRecalculee });
+
+  // Étape 4 — comparaison à la racine annoncée (sur les octets décodés).
+  let racineAnnoncee;
+  try {
+    racineAnnoncee = hexVersOctets(temoin.racine, 32, 'racine');
+  } catch (erreur) {
+    etapes.push({ ok: false, texte: 'Racine : ' + erreur.message });
+    return { etapes, calcul, ancrage: null };
+  }
+  if (!memesOctets(racineRecalculee, racineAnnoncee)) {
+    etapes.push({ ok: false,
+      texte: 'La racine recalculée NE correspond PAS à la racine du témoin : ',
+      code: temoin.racine });
+    return { etapes, calcul, ancrage: null };
+  }
+  etapes.push({ ok: true, texte: 'La racine recalculée est identique à la racine du témoin.' });
+
+  // Étape 5 — attestations. Les types inconnus sont ignorés sans erreur.
+  const attestations = Array.isArray(temoin.attestations) ? temoin.attestations : [];
+  const ots = attestations.filter(a => a && a.type === 'ots');
+  const completes = ots.filter(a => Number.isInteger(a.bloc));
+  const ancrage = {
+    aucune: attestations.length === 0,
+    incompletes: ots.length - completes.length,
+    completes: completes,
+    inconnues: attestations.length - ots.length
+  };
+  return { etapes, calcul, ancrage };
+}
+
+/* ---------- Interface ---------- */
+
+const zoneDepot = document.getElementById('zone-depot');
+const champFichier = document.getElementById('fichier-temoin');
+const champTexte = document.getElementById('texte-temoin');
+const sectionResultat = document.getElementById('resultat');
+const sectionDonnees = document.getElementById('section-donnees');
+const champDonnees = document.getElementById('fichier-donnees');
+const resultatDonnees = document.getElementById('resultat-donnees');
+
+let temoinCourant = null; // le dernier témoin vérifié, pour la comparaison de données
+
+// Exemple : vecteur C de l'annexe A de SPEC.md (témoin en attente d'ancrage).
+const EXEMPLE = {
+  format: 1,
+  hachage: 'sha-256',
+  canonique: '{"n":3}',
+  sel: '3333333333333333333333333333333333333333333333333333333333333333',
+  chemin: [
+    { cote: 'gauche',
+      empreinte: '619d2265e7a293938e0caf3207c4015658312d78db8d24b8e11bbffd4d659f35' }
+  ],
+  racine: 'c6c5f4615cc9a453def6b0a1b6999de9528c194a102983475a3e7e84106ebe8e',
+  attestations: []
+};
+
+function element(balise, attributs, ...enfants) {
+  const noeud = document.createElement(balise);
+  for (const [cle, valeur] of Object.entries(attributs || {})) {
+    if (cle === 'texte') noeud.textContent = valeur;
+    else noeud.setAttribute(cle, valeur);
+  }
+  for (const enfant of enfants) noeud.append(enfant);
+  return noeud;
+}
+
+function afficherErreur(message) {
+  sectionResultat.hidden = false;
+  sectionResultat.replaceChildren(
+    element('div', { class: 'verdict echec' },
+      element('h2', { texte: 'Témoin illisible' }),
+      element('p', { texte: message }))
+  );
+  sectionDonnees.hidden = true;
+}
+
+async function lancerVerification(texte) {
+  let temoin;
+  try {
+    temoin = JSON.parse(texte);
+  } catch (_erreur) {
+    afficherErreur('Ce contenu n’est pas du JSON valide.');
+    return;
+  }
+  if (typeof temoin !== 'object' || temoin === null || Array.isArray(temoin)) {
+    afficherErreur('Un témoin est un objet JSON.');
+    return;
+  }
+
+  const { etapes, calcul, ancrage } = await verifierTemoin(temoin);
+  const conforme = etapes.every(e => e.ok) && ancrage !== null;
+  temoinCourant = conforme ? temoin : null;
+
+  const fragments = [];
+
+  // Verdict.
+  if (!conforme) {
+    fragments.push(element('div', { class: 'verdict echec' },
+      element('h2', { texte: 'Non conforme à son témoin' }),
+      element('p', { texte: 'Le recalcul ne confirme pas ce témoin. Détail dans les étapes ci-dessous.' })));
+  } else if (ancrage.completes.length > 0) {
+    const verdict = element('div', { class: 'verdict ok' },
+      element('h2', { texte: 'Conforme à son témoin' }));
+    for (const attestation of ancrage.completes) {
+      verdict.append(element('p', {},
+        'Racine ', element('code', { texte: temoin.racine }),
+        ' à constater dans le bloc Bitcoin ',
+        element('strong', { texte: String(attestation.bloc) }), '.'));
+      const liens = element('div', { class: 'liens-bloc' });
+      liens.append(
+        element('a', { href: 'https://mempool.space/fr/block/' + attestation.bloc,
+          target: '_blank', rel: 'noopener',
+          texte: 'Voir le bloc ' + attestation.bloc + ' sur mempool.space' }),
+        element('a', { href: 'https://blockstream.info/block-height/' + attestation.bloc,
+          target: '_blank', rel: 'noopener',
+          texte: 'sur blockstream.info' }));
+      if (typeof attestation.preuve === 'string') {
+        const bouton = element('button', { type: 'button', texte: 'Télécharger la preuve .ots' });
+        bouton.addEventListener('click', () => {
+          try {
+            const brut = atob(attestation.preuve);
+            const octets = Uint8Array.from(brut, c => c.charCodeAt(0));
+            const url = URL.createObjectURL(new Blob([octets], { type: 'application/octet-stream' }));
+            const lien = element('a', { href: url, download: 'preuve.ots' });
+            document.body.append(lien); lien.click(); lien.remove();
+            setTimeout(() => URL.revokeObjectURL(url), 5000);
+          } catch (_erreur) {
+            bouton.textContent = 'Preuve illisible (base64 invalide)';
+          }
+        });
+        liens.append(bouton);
+      }
+      verdict.append(liens);
+    }
+    verdict.append(element('p', { class: 'note',
+      texte: 'Le lien entre la racine et le bloc est porté par la preuve .ots ; ' +
+        'son contrôle complet se fait avec le client OpenTimestamps officiel ' +
+        '(ots verify), hors du navigateur en v1.' }));
+    fragments.push(verdict);
+  } else {
+    const raison = ancrage.incompletes > 0
+      ? 'La preuve OpenTimestamps est encore incomplète : elle attend sa ' +
+        'confirmation Bitcoin (quelques heures), puis doit être complétée.'
+      : (ancrage.aucune
+        ? 'Ce témoin ne porte aucune attestation : il est en attente d’ancrage.'
+        : 'Aucune attestation de ce témoin n’est d’un type connu de cette page (v1 : "ots").');
+    fragments.push(element('div', { class: 'verdict attente' },
+      element('h2', { texte: 'Conforme à son témoin — aucune antériorité prouvée' }),
+      element('p', { texte: raison })));
+  }
+
+  // Étapes.
+  const liste = element('ol', { class: 'etapes' });
+  for (const etape of etapes) {
+    const item = element('li', {},
+      element('span', { class: 'puce ' + (etape.ok ? 'ok' : 'echec'),
+        texte: etape.ok ? '✓ ' : '✗ ' }),
+      etape.texte);
+    if (etape.code) item.append(element('code', { texte: etape.code }));
+    liste.append(item);
+  }
+  if (conforme) {
+    const item = element('li', {},
+      element('span', { class: 'puce ' + (ancrage.completes.length > 0 ? 'ok' : 'neutre'),
+        texte: ancrage.completes.length > 0 ? '✓ ' : '… ' }),
+      'Attestations : ' + ancrage.completes.length + ' complète(s), ' +
+      ancrage.incompletes + ' incomplète(s), ' + ancrage.inconnues +
+      ' de type inconnu (ignorée(s)).');
+    liste.append(item);
+  }
+  fragments.push(liste);
+
+  // Données scellées, lisibles.
+  const bloc = element('details', {},
+    element('summary', { texte: 'Données scellées (champ canonique)' }));
+  let joli = temoin.canonique;
+  try { joli = JSON.stringify(JSON.parse(temoin.canonique), null, 2); } catch (_erreur) { /* telle quelle */ }
+  bloc.append(element('pre', { texte: joli }));
+  if (typeof temoin.canonique === 'string') fragments.push(bloc);
+
+  sectionResultat.hidden = false;
+  sectionResultat.replaceChildren(...fragments);
+  sectionDonnees.hidden = !conforme;
+  resultatDonnees.textContent = '';
+  champDonnees.value = '';
+}
+
+/* ---------- Événements ---------- */
+
+zoneDepot.addEventListener('click', () => champFichier.click());
+zoneDepot.addEventListener('keydown', evenement => {
+  if (evenement.key === 'Enter' || evenement.key === ' ') champFichier.click();
+});
+zoneDepot.addEventListener('dragover', evenement => {
+  evenement.preventDefault();
+  zoneDepot.classList.add('survol');
+});
+zoneDepot.addEventListener('dragleave', () => zoneDepot.classList.remove('survol'));
+zoneDepot.addEventListener('drop', async evenement => {
+  evenement.preventDefault();
+  zoneDepot.classList.remove('survol');
+  const fichier = evenement.dataTransfer.files[0];
+  if (!fichier) return;
+  const texte = await fichier.text();
+  champTexte.value = texte;
+  lancerVerification(texte);
+});
+champFichier.addEventListener('change', async () => {
+  const fichier = champFichier.files[0];
+  if (!fichier) return;
+  const texte = await fichier.text();
+  champTexte.value = texte;
+  lancerVerification(texte);
+});
+
+document.getElementById('btn-verifier').addEventListener('click', () => {
+  const texte = champTexte.value.trim();
+  if (!texte) { afficherErreur('Déposez, choisissez ou collez d’abord un témoin.'); return; }
+  lancerVerification(texte);
+});
+document.getElementById('btn-exemple').addEventListener('click', () => {
+  champTexte.value = JSON.stringify(EXEMPLE, null, 2);
+  lancerVerification(champTexte.value);
+});
+document.getElementById('btn-effacer').addEventListener('click', () => {
+  champTexte.value = '';
+  sectionResultat.hidden = true;
+  sectionDonnees.hidden = true;
+  temoinCourant = null;
+});
+
+// Comparaison facultative aux données originales (SPEC.md §9, dernier alinéa).
+champDonnees.addEventListener('change', async () => {
+  const fichier = champDonnees.files[0];
+  if (!fichier || !temoinCourant) return;
+  const octetsFichier = new Uint8Array(await fichier.arrayBuffer());
+  const octetsCanonique = new TextEncoder().encode(temoinCourant.canonique);
+  if (memesOctets(octetsFichier, octetsCanonique)) {
+    resultatDonnees.innerHTML = '';
+    resultatDonnees.append(
+      element('span', { class: 'puce ok', texte: '✓ ' }),
+      'Le fichier déposé est octet pour octet identique au champ canonique du témoin.');
+  } else {
+    resultatDonnees.innerHTML = '';
+    resultatDonnees.append(
+      element('span', { class: 'puce echec', texte: '✗ ' }),
+      'Le fichier déposé diffère du champ canonique du témoin (' +
+      octetsFichier.length + ' octets contre ' + octetsCanonique.length + ').');
+  }
+});
+</script>
+</body>
+</html>
