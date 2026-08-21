@@ -1,4 +1,4 @@
-# temoin
+# sparkso-temoin
 
 **États certifiés par ancrage public.** Des octets en entrée, un témoin en
 sortie : ce système certifie que des données existaient au plus tard à un

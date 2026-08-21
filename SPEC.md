@@ -1,4 +1,4 @@
-# temoin — Spécification v1
+# sparkso-temoin — Spécification v1
 
 **Format du témoin, sérialisation canonique, sémantique de la garantie.**
 
