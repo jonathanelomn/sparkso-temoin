@@ -54,12 +54,17 @@ sa section 8 — ne rien implémenter avant validation.
 
 `verifieur/index.html` (FR) et `verifieur/en.html` (EN) sont des copies
 miroirs : **toute modification de l'une doit être répercutée dans
-l'autre**. Style imposé (façon prismdata.com) : fond #08090d, halo
-vert/violet, onglets pilule, accent #3ecf8e, logo Sparkso = hexagone de
-19 hexagones décliné en vert. Aucune ressource externe (ni police, ni
-image liée — les captures du guide sont embarquées en data-URI). Le volet
-« Le parcours d'un témoin » sert de tableau de suivi : le tenir à jour à
-chaque brique livrée.
+l'autre**. Style imposé (décision du 22 août 2026 — lisibilité en plein
+soleil sur téléphone, registre du document officiel ; le thème sombre
+d'origine faisait « futuriste » pour le public visé) : fond clair
+#f7faf9 à peine teinté de vert, halos pastel vert/violet, onglets
+pilule, accent vert soutenu #0e8a58, logo Sparkso = hexagone de
+19 hexagones décliné en vert, soutenu au centre. Aucune ressource
+externe (ni police, ni image liée — les captures du guide sont
+embarquées en data-URI ; les captures « réelles » du guide doivent
+montrer la page dans son thème courant). Le volet « Le parcours d'un
+témoin » sert de tableau de suivi : le tenir à jour à chaque brique
+livrée.
 
 ## Frontière stricte
 
