@@ -1,0 +1,10 @@
+{
+  "format": 1,
+  "lot": "demonstration-notes-2026-S1",
+  "cree": "2026-08-22T12:00:00Z",
+  "enregistrements": [
+    { "etudiant": "2026-0417", "cours": "ALG-101", "note": 17, "mention": "très bien", "session": "2026-S1" },
+    { "etudiant": "2026-0912", "cours": "ALG-101", "note": 12, "mention": "assez bien", "session": "2026-S1" },
+    { "etudiant": "2026-1204", "cours": "ALG-101", "note": 14, "mention": "bien", "session": "2026-S1" }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "format": 1,
+  "lot": "demonstration-notes-2026-S1",
+  "racine": "b133a459e42616aaa2338433e6da9d2589a015b117d43098a5d01be47611867b",
+  "attention": "SECRET — ces sels permettent de confirmer les données scellées. À stocker comme les données elles-mêmes, à détruire avec elles (droit à l'effacement).",
+  "sels": [
+    "7c27a50b146725463452bc39ccf4e60d2cfd31e010392d7496a6e67f38dc0e2c",
+    "55c7c98664e70394f11c3bd2ee1f3d5dff6bdccaf986aa1449501153261b1add",
+    "2642cbd236a2ce1745e2ee56dd26b80654f9fb0d7a40169b9128c43a63574153"
+  ]
+}

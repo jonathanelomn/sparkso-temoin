@@ -171,6 +171,7 @@
   }
   .badge.fait { background: var(--ok-fond); color: var(--ok); border-color: rgba(62, 207, 142, .4); }
   .badge.avenir { background: rgba(255, 255, 255, .05); color: var(--sourdine); border-color: var(--cadre); }
+  .badge.encours { background: var(--attente-fond); color: var(--attente); border-color: rgba(228, 192, 92, .4); }
   hr { border: none; border-top: 1px solid var(--cadre); margin: 2rem 0; }
   footer { margin-top: 2.6rem; border-top: 1px solid var(--cadre); padding-top: 1.2rem; }
 </style>
@@ -223,6 +224,7 @@
     <button role="tab" aria-selected="true" data-volet="volet-verifier">Vérifier un témoin</button>
     <button role="tab" aria-selected="false" data-volet="volet-comprendre">Comprendre le système</button>
     <button role="tab" aria-selected="false" data-volet="volet-parcours">Le parcours d'un témoin</button>
+    <button role="tab" aria-selected="false" data-volet="volet-guide">Guide pas à pas</button>
   </nav>
 
   <!-- ================== VOLET : VÉRIFIER ================== -->
@@ -521,18 +523,25 @@
       </p>
     </div>
     <div class="carte">
-      <h3>L'outil en ligne de commande (cli/) <span class="badge avenir">À venir</span></h3>
+      <h3>L'outil en ligne de commande (cli/) <span class="badge fait">Fait — 22 août 2026</span></h3>
       <p>
-        Quatre commandes pour opérer le système : émettre des témoins,
-        les vérifier, ancrer une racine dans Bitcoin, et compléter la preuve
-        quelques heures plus tard, une fois le dépôt confirmé.
+        Quatre commandes qui suivent la vie d'un lot, chacune expliquant
+        ce qu'elle fait en français courant : <code>emettre</code>
+        (fabriquer les témoins d'un lot d'extraction), <code>ancrer</code>
+        (déposer la racine dans Bitcoin via OpenTimestamps),
+        <code>completer</code> (récupérer la preuve confirmée et l'ajouter
+        aux témoins), <code>verifier</code> (contrôler un témoin pas à
+        pas). Seules <code>ancrer</code> et <code>completer</code>
+        touchent au réseau.
       </p>
     </div>
     <div class="carte">
-      <h3>Le jalon de preuve <span class="badge avenir">À venir</span></h3>
+      <h3>Le jalon de preuve <span class="badge encours">En cours — ancré le 22 août 2026</span></h3>
       <p>
-        Le test grandeur nature : ancrer un vrai fichier d'essai, attendre
-        la confirmation Bitcoin, puis faire vérifier notre reçu par l'outil
+        Le test grandeur nature : un lot d'essai a été réellement ancré —
+        sa racine est déposée auprès de quatre calendriers OpenTimestamps
+        publics, en attente de confirmation Bitcoin (quelques heures).
+        Ensuite : compléter la preuve, puis la faire vérifier par l'outil
         officiel d'OpenTimestamps — l'outil de quelqu'un d'autre. S'il dit
         « valide », la compatibilité avec le standard est prouvée, pas
         seulement affirmée. Ce cas réel deviendra l'exemple canonique de la
@@ -545,6 +554,144 @@
       entrée, un témoin en sortie. Le choix de <em>quoi</em> sceller, à
       quel moment, et la conservation des données et des sels appartiennent
       à chaque projet qui l'utilise (Sparkso Universités en premier).
+    </p>
+  </section>
+
+  <!-- ================== VOLET : GUIDE PAS À PAS ================== -->
+  <section id="volet-guide" hidden>
+    <h2>Vérifier votre témoin, pas à pas</h2>
+    <p>
+      Ce guide s'adresse à tout le monde — étudiant, employeur, famille,
+      administration. Aucune connaissance technique n'est nécessaire :
+      si vous savez ouvrir un fichier, vous savez vérifier un témoin.
+    </p>
+    <ol class="parcours">
+      <li>
+        <strong class="titre">Retrouvez votre fichier témoin</strong>
+        C'est un petit fichier qui vous a été remis (par votre université,
+        par exemple), dont le nom se termine par
+        <code>.temoin.json</code>. Gardez-le précieusement, comme un
+        document personnel : il contient vos données et un code secret.
+      </li>
+      <li>
+        <strong class="titre">Ouvrez la page de vérification</strong>
+        C'est la page où vous êtes. Chaque établissement l'héberge à sa
+        propre adresse, mais toutes sont identiques — et vous pouvez
+        utiliser n'importe laquelle : la page ne fait que des calculs,
+        chez vous, sans rien envoyer.
+      </li>
+      <li>
+        <strong class="titre">Déposez le fichier</strong>
+        Allez dans l'onglet « Vérifier un témoin » et glissez votre
+        fichier dans le cadre en pointillés (ou cliquez sur le cadre pour
+        le choisir sur votre ordinateur). La vérification se lance toute
+        seule, en moins d'une seconde.
+      </li>
+      <li>
+        <strong class="titre">Lisez le résultat</strong>
+        Un encadré de couleur apparaît : <strong>vert</strong>,
+        <strong>orange</strong> ou <strong>rouge</strong>. La
+        signification exacte de chaque couleur est détaillée juste
+        en dessous de ce guide. Sous l'encadré, chaque étape du calcul
+        est affichée et expliquée en français.
+      </li>
+      <li>
+        <strong class="titre">Si c'est vert : constatez par vous-même</strong>
+        L'encadré vert affiche un numéro de bloc Bitcoin et un lien
+        « Voir le bloc ». Cliquez : vous arrivez sur un site public
+        indépendant de nous (un « explorateur »). Si la page du bloc
+        existe et porte bien le même numéro, vous avez la confirmation :
+        vos données existaient au plus tard au moment de ce bloc, et
+        n'ont pas changé depuis.
+      </li>
+    </ol>
+
+    <h2>Les trois résultats possibles</h2>
+    <div class="carte">
+      <h3><span class="puce ok">●</span> Vert — « Conforme à son témoin »</h3>
+      <p>
+        Tout est en ordre : les calculs confirment le témoin, et la racine
+        est ancrée dans un bloc Bitcoin précis. Vous n'avez rien à faire —
+        votre preuve est solide et le restera, même si la plateforme qui
+        l'a émise disparaît un jour.
+      </p>
+    </div>
+    <div class="carte">
+      <h3><span class="puce neutre">●</span> Orange — « Conforme, mais sans preuve d'ancienneté »</h3>
+      <p>
+        Les calculs sont justes, mais rien ne relie encore ce témoin à la
+        blockchain : soit l'ancrage n'a pas encore eu lieu, soit il attend
+        sa confirmation Bitcoin (quelques heures). C'est un état normal et
+        temporaire juste après un scellement. Si cela dure plusieurs
+        jours, signalez-le à l'émetteur du témoin.
+      </p>
+    </div>
+    <div class="carte">
+      <h3><span class="puce echec">●</span> Rouge — « Non conforme »</h3>
+      <p>
+        Les calculs ne confirment pas ce témoin : le fichier a été
+        modifié, abîmé (par exemple lors d'une copie), ou il est mal
+        formé. Cela ne veut pas dire que vos données sont fausses — cela
+        veut dire que <em>ce fichier-là</em> ne prouve rien. Demandez à
+        l'émetteur de vous redélivrer votre témoin.
+      </p>
+    </div>
+
+    <h2>Questions fréquentes</h2>
+    <details>
+      <summary>Mon fichier témoin contient-il des informations sensibles ?</summary>
+      <p>
+        Oui : il contient vos données (lisibles) et le code secret qui les
+        protège. Traitez-le comme un relevé ou un diplôme papier : gardez-le
+        chez vous, ne le publiez pas. Le remettre à quelqu'un, c'est lui
+        montrer vos données — c'est justement à ça qu'il sert, quand
+        <em>vous</em> le décidez.
+      </p>
+    </details>
+    <details>
+      <summary>J'ai perdu mon fichier témoin. Est-ce grave ?</summary>
+      <p>
+        Non : l'établissement qui vous l'a remis conserve ce qu'il faut
+        pour vous le redélivrer à l'identique. La preuve dans Bitcoin,
+        elle, ne bouge jamais.
+      </p>
+    </details>
+    <details>
+      <summary>Ai-je besoin d'Internet pour vérifier ?</summary>
+      <p>
+        Les calculs (les étapes 1 à 4) fonctionnent même hors connexion.
+        Internet ne sert qu'à une chose : cliquer sur le lien vers
+        l'explorateur public pour constater le bloc Bitcoin.
+      </p>
+    </details>
+    <details>
+      <summary>Pourquoi devrais-je croire cette page ?</summary>
+      <p>
+        Vous n'avez pas à la croire : elle n'envoie rien nulle part (les
+        outils de n'importe quel informaticien peuvent le constater), et
+        tout ce qu'elle calcule peut être recalculé par un programme
+        indépendant, écrit par n'importe qui, à partir des règles
+        publiques du système. Les plus techniques peuvent aussi contrôler
+        la preuve <code>.ots</code> avec le
+        <a href="https://opentimestamps.org/" rel="noopener">client
+        OpenTimestamps officiel</a> — un outil que nous n'avons pas écrit.
+      </p>
+    </details>
+    <details>
+      <summary>Que prouve exactement un résultat vert ?</summary>
+      <p>
+        Deux choses, et deux seulement : ces données <strong>existaient au
+        plus tard</strong> au moment du bloc indiqué, et elles
+        <strong>n'ont pas été modifiées</strong> depuis. Le témoin ne dit
+        pas si le contenu est exact ou sincère — cela relève de
+        l'établissement qui l'a émis, comme pour un document papier.
+      </p>
+    </details>
+
+    <p class="note">
+      Un doute, une question, un résultat rouge ? Le bon réflexe est
+      toujours le même : contactez l'établissement qui vous a remis le
+      témoin.
     </p>
   </section>
 

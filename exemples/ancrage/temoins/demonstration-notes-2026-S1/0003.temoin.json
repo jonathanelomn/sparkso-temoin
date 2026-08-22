@@ -1,0 +1,14 @@
+{
+  "format": 1,
+  "hachage": "sha-256",
+  "canonique": "{\"cours\":\"ALG-101\",\"etudiant\":\"2026-1204\",\"mention\":\"bien\",\"note\":14,\"session\":\"2026-S1\"}",
+  "sel": "2642cbd236a2ce1745e2ee56dd26b80654f9fb0d7a40169b9128c43a63574153",
+  "chemin": [
+    {
+      "cote": "gauche",
+      "empreinte": "8c215890e1ce1a48d71a964eebef59c029a665cd130f7d84e8f38107270ec9c3"
+    }
+  ],
+  "racine": "b133a459e42616aaa2338433e6da9d2589a015b117d43098a5d01be47611867b",
+  "attestations": []
+}

@@ -1,14 +1,25 @@
 # cli/
 
-Quatre commandes :
+L'outil en ligne de commande. Quatre commandes qui suivent la vie d'un
+lot (voir [EXTRACTION.md](../EXTRACTION.md)), chacune expliquant ce
+qu'elle fait en français courant :
 
-- `temoin` — émettre les témoins d'un lot d'enregistrements (calcul pur).
-- `verifier` — vérifier un témoin (calcul pur).
-- `ancrer` — sceller une racine via les calendriers OpenTimestamps
-  (réseau ; produit une preuve **incomplète**).
-- `completer` — mettre à niveau une preuve OTS après confirmation Bitcoin
-  (équivalent de `ots upgrade`) ; une preuve est incomplète à l'émission
-  et le devient quelques heures plus tard via les calendriers publics —
-  la CLI gère cet état intermédiaire proprement (SPEC.md §7).
+```
+temoin emettre <lot.json>      fabrique sels + témoins + racine   (pur calcul)
+temoin ancrer <lot>            dépose la racine dans Bitcoin      (réseau)
+temoin completer <lot>         récupère la preuve confirmée       (réseau)
+temoin verifier <t.temoin.json> contrôle un témoin, pas à pas     (pur calcul)
+```
 
-Construites en dernier, après SPEC.md, le vérifieur et la lib.
+`temoin aide` affiche le déroulé complet. Option commune :
+`--dossier <chemin>` (défaut `ancrage`), l'arborescence d'EXTRACTION.md §3.
+
+`completer` gère proprement l'état intermédiaire d'OpenTimestamps : une
+preuve est incomplète à l'émission et le devient quelques heures plus
+tard via les calendriers publics (équivalent de `ots upgrade`) — tant
+que Bitcoin n'a pas confirmé, la commande le dit et sort avec le code 2.
+
+Seul ce dossier touche au réseau, via la bibliothèque JavaScript
+**officielle** d'OpenTimestamps (implémentation de référence — la
+meilleure garantie d'interopérabilité avec l'outil officiel `ots`).
+La `lib/` du projet reste, elle, à zéro dépendance.
