@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
 <title>Témoins — comprendre, suivre et vérifier</title>
 <!--
   Page auto-suffisante : aucun script externe, aucune police externe,
@@ -26,168 +27,163 @@
   Spécification : SPEC.md du dépôt sparkso-temoin (format du témoin v1).
 -->
 <style>
-  /* Identité visuelle : registre notarial — parchemin, encre chaude,
-     rouge « cire à cacheter ». Volontairement distincte des interfaces
-     applicatives des projets consommateurs. */
+  /* Identité visuelle : sombre, sobre, moderne — fond quasi noir à
+     peine bleuté, deux tons de texte, cartes translucides arrondies,
+     boutons pilule, accent vert émeraude et halo violet. Thème unique.
+     Aucune police téléchargée : Inter si présente, sinon la police
+     système. */
   :root {
-    --fond: #f6f1e5; --encre: #2b241a; --sourdine: #7a6f5c;
-    --cadre: #d3c8b0; --panneau: #efe8d7;
-    --ok: #3e6b34; --ok-fond: #e7edda;
-    --attente: #8a6210; --attente-fond: #f3e8c8;
-    --echec: #8c2f24; --echec-fond: #f1ddd6;
-    --accent: #8c2f24; --lien: #6b4f1d; --mono-fond: #eae2cd;
-    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "Times New Roman", serif;
-    --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  }
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --fond: #1b1712; --encre: #e9e1d2; --sourdine: #a2957e;
-      --cadre: #4a4133; --panneau: #241f18;
-      --ok: #8fbf7a; --ok-fond: #26301c;
-      --attente: #d9b35a; --attente-fond: #362b10;
-      --echec: #e08573; --echec-fond: #3c1f18;
-      --accent: #e08573; --lien: #cda45e; --mono-fond: #2b2519;
-    }
+    --fond: #08090d; --encre: #f4f6f8; --sourdine: #969ba1;
+    --cadre: rgba(255, 255, 255, .1); --panneau: rgba(255, 255, 255, .06);
+    --ok: #3ecf8e; --ok-fond: rgba(62, 207, 142, .1);
+    --attente: #e4c05c; --attente-fond: rgba(228, 192, 92, .09);
+    --echec: #ff6b5e; --echec-fond: rgba(255, 107, 94, .09);
+    --accent: #3ecf8e; --violet: 54, 56, 150;
+    --mono-fond: rgba(255, 255, 255, .07);
+    --sans: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   }
   * { box-sizing: border-box; }
   body {
-    margin: 0; background: var(--fond); color: var(--encre);
-    font: 17px/1.65 var(--serif);
+    margin: 0; color: var(--encre);
+    /* Halo vert/violet en haut de page, façon lueur de dégradé. */
+    background:
+      radial-gradient(38rem 26rem at 12% -4%, rgba(62, 207, 142, .13), transparent 70%) no-repeat,
+      radial-gradient(44rem 30rem at 88% -2%, rgba(var(--violet), .28), transparent 70%) no-repeat,
+      var(--fond);
+    font: 16px/1.65 var(--sans);
   }
-  main { max-width: 46rem; margin: 0 auto; padding: 2.2rem 1.1rem 4rem; }
-  .entete { display: flex; gap: 1.1rem; align-items: flex-start; }
-  .sceau {
-    flex: none; width: 3.4rem; height: 3.4rem; margin-top: .3rem;
-    border: 2px solid var(--accent); outline: 1px solid var(--accent);
-    outline-offset: 3px; border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    color: var(--accent); font-size: 1.5rem;
-    transform: rotate(-8deg);
+  main { max-width: 46rem; margin: 0 auto; padding: 2rem 1.1rem 4.5rem; }
+  .marque {
+    font-size: .92rem; font-weight: 650; letter-spacing: .01em;
+    margin: 0 0 2.6rem; color: var(--encre);
   }
-  .surtitre {
-    font-family: var(--sans); font-size: .72rem; font-weight: 700;
-    letter-spacing: .22em; text-transform: uppercase;
-    color: var(--accent); margin: 0 0 .2rem;
+  .marque .etincelle { color: var(--accent); margin-right: .35rem; }
+  .marque .demi { color: var(--sourdine); font-weight: 500; }
+  h1 {
+    font-size: clamp(2.1rem, 6vw, 3rem); line-height: 1.12;
+    font-weight: 450; letter-spacing: -.02em; margin: 0 0 .7rem;
   }
-  h1 { font-size: 1.85rem; line-height: 1.2; margin: 0 0 .35rem; font-weight: 600; }
-  h2 {
-    font-size: 1.3rem; margin: 2rem 0 .6rem; font-weight: 600;
-    border-bottom: 1px solid var(--cadre); padding-bottom: .25rem;
-  }
-  h3 { font-size: 1.08rem; margin: 1.2rem 0 .35rem; font-weight: 600; }
-  .sous-titre { color: var(--sourdine); margin: 0 0 1.25rem; font-style: italic; }
-  .note { color: var(--sourdine); font-size: .9rem; }
+  h1 .grise { color: var(--sourdine); }
+  h2 { font-size: 1.32rem; font-weight: 600; letter-spacing: -.01em; margin: 2.2rem 0 .6rem; }
+  h3 { font-size: 1.05rem; font-weight: 600; margin: 1.2rem 0 .35rem; }
+  .sous-titre { color: var(--sourdine); margin: 0 0 1.4rem; font-size: 1.05rem; }
+  .note { color: var(--sourdine); font-size: .89rem; }
   code, .mono {
     font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
-    font-size: .8125rem; background: var(--mono-fond);
-    border-radius: 4px; padding: .05rem .3rem; overflow-wrap: anywhere;
+    font-size: .8rem; background: var(--mono-fond);
+    border-radius: 6px; padding: .08rem .35rem; overflow-wrap: anywhere;
   }
   nav.onglets {
-    display: flex; gap: .3rem; flex-wrap: wrap;
-    border-bottom: 3px double var(--cadre); margin: 1.4rem 0 1.7rem;
+    display: inline-flex; gap: .2rem; flex-wrap: wrap;
+    background: var(--panneau); border: 1px solid var(--cadre);
+    border-radius: 999px; padding: .28rem; margin: 1.4rem 0 1.8rem;
   }
   nav.onglets button {
-    font-family: var(--sans); font-size: .78rem; font-weight: 700;
-    letter-spacing: .13em; text-transform: uppercase; color: var(--sourdine);
-    background: none; border: none; border-bottom: 3px solid transparent;
-    padding: .55rem .8rem .5rem; cursor: pointer; border-radius: 0;
+    font: inherit; font-size: .86rem; font-weight: 600; color: var(--sourdine);
+    background: none; border: none; border-radius: 999px;
+    padding: .45rem 1rem; cursor: pointer; transition: color .15s, background .15s;
   }
   nav.onglets button[aria-selected="true"] {
-    color: var(--accent); border-bottom-color: var(--accent);
+    background: var(--encre); color: var(--fond);
   }
   .carte {
-    border: 1px solid var(--cadre); border-radius: 2px;
-    padding: .9rem 1.1rem; margin: .9rem 0; background: var(--panneau);
-    box-shadow: inset 0 0 0 3px var(--fond), inset 0 0 0 4px var(--cadre);
-    padding: 1.1rem 1.3rem;
+    border: 1px solid var(--cadre); border-radius: 16px;
+    padding: 1.05rem 1.25rem; margin: .9rem 0; background: var(--panneau);
   }
   .carte h3 { margin-top: 0; }
   .carte p { margin: .4rem 0; }
   .depot {
-    border: 1px solid var(--cadre); outline: 1px solid var(--cadre);
-    outline-offset: 5px; border-radius: 2px; margin: 0 6px;
-    padding: 1.6rem; text-align: center; cursor: pointer;
-    transition: border-color .15s, outline-color .15s, background .15s;
+    border: 1px dashed rgba(255, 255, 255, .22); border-radius: 16px;
+    background: rgba(255, 255, 255, .03);
+    padding: 1.7rem; text-align: center; cursor: pointer;
+    transition: border-color .15s, background .15s;
   }
-  .depot.survol { border-color: var(--accent); outline-color: var(--accent); background: var(--panneau); }
+  .depot.survol { border-color: var(--accent); background: var(--ok-fond); }
   .depot p { margin: .25rem 0; }
   textarea {
-    width: 100%; min-height: 7rem; margin-top: 1.2rem; padding: .6rem;
-    border: 1px solid var(--cadre); border-radius: 2px; resize: vertical;
-    background: var(--panneau); color: var(--encre);
-    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: .8125rem;
+    width: 100%; min-height: 7rem; margin-top: 1rem; padding: .75rem .9rem;
+    border: 1px solid var(--cadre); border-radius: 12px; resize: vertical;
+    background: rgba(255, 255, 255, .04); color: var(--encre);
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: .8rem;
   }
-  .actions { display: flex; gap: .6rem; flex-wrap: wrap; margin-top: .6rem; }
+  textarea:focus, .depot:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .actions { display: flex; gap: .6rem; flex-wrap: wrap; margin-top: .8rem; }
   button {
-    font-family: var(--sans); font-size: .82rem; font-weight: 600;
-    letter-spacing: .04em; padding: .5rem 1rem; border-radius: 2px; cursor: pointer;
+    font: inherit; font-size: .88rem; font-weight: 600;
+    padding: .55rem 1.15rem; border-radius: 999px; cursor: pointer;
     border: 1px solid var(--cadre); background: var(--panneau); color: var(--encre);
+    transition: background .15s, box-shadow .15s;
   }
-  button.principal { background: var(--accent); border-color: var(--accent); color: var(--fond); }
+  button:hover { background: rgba(255, 255, 255, .1); }
+  button.principal {
+    background: var(--encre); border-color: var(--encre); color: var(--fond);
+    box-shadow: 0 0 1.4rem rgba(62, 207, 142, .28), 0 0 2.8rem rgba(var(--violet), .3);
+  }
+  button.principal:hover { background: #ffffff; }
   #resultat { margin-top: 2rem; }
-  .verdict { border-radius: 2px; padding: 1rem 1.2rem; margin-bottom: 1rem; }
-  .verdict h2 { margin: 0 0 .3rem; font-size: 1.1rem; border: none; padding: 0; }
-  .verdict p { margin: .2rem 0; }
-  .verdict.ok { background: var(--ok-fond); border: 1px solid var(--ok); }
+  .verdict { border-radius: 16px; padding: 1.05rem 1.25rem; margin-bottom: 1rem; border: 1px solid; }
+  .verdict h2 { margin: 0 0 .3rem; font-size: 1.08rem; }
+  .verdict p { margin: .25rem 0; }
+  .verdict.ok { background: var(--ok-fond); border-color: rgba(62, 207, 142, .38); }
   .verdict.ok h2 { color: var(--ok); }
-  .verdict.attente { background: var(--attente-fond); border: 1px solid var(--attente); }
+  .verdict.attente { background: var(--attente-fond); border-color: rgba(228, 192, 92, .38); }
   .verdict.attente h2 { color: var(--attente); }
-  .verdict.echec { background: var(--echec-fond); border: 1px solid var(--echec); }
+  .verdict.echec { background: var(--echec-fond); border-color: rgba(255, 107, 94, .38); }
   .verdict.echec h2 { color: var(--echec); }
   ol.etapes { padding-left: 1.4rem; margin: 1rem 0; }
-  ol.etapes li { margin: .65rem 0; }
-  ol.etapes .aide { display: block; color: var(--sourdine); font-size: .84rem; margin-top: .15rem; }
-  .puce { font-weight: 600; }
+  ol.etapes li { margin: .7rem 0; }
+  ol.etapes .aide { display: block; color: var(--sourdine); font-size: .84rem; margin-top: .18rem; }
+  .puce { font-weight: 700; }
   .puce.ok { color: var(--ok); }
   .puce.echec { color: var(--echec); }
   .puce.neutre { color: var(--attente); }
-  details { margin: .75rem 0; border: 1px solid var(--cadre); border-radius: 2px; padding: .5rem .8rem; }
+  details {
+    margin: .75rem 0; border: 1px solid var(--cadre); border-radius: 12px;
+    padding: .55rem .9rem; background: rgba(255, 255, 255, .03);
+  }
   summary { cursor: pointer; font-weight: 600; }
   pre {
-    background: var(--mono-fond); border-radius: 2px; padding: .7rem;
-    overflow-x: auto; font-size: .8125rem; line-height: 1.5;
+    background: var(--mono-fond); border-radius: 12px; padding: .75rem .9rem;
+    overflow-x: auto; font-size: .8rem; line-height: 1.55;
   }
-  a { color: var(--lien); text-decoration-color: var(--cadre); text-underline-offset: 2px; }
-  .liens-bloc { display: flex; gap: .8rem; flex-wrap: wrap; margin-top: .4rem; }
+  a { color: var(--accent); text-decoration-color: rgba(62, 207, 142, .4); text-underline-offset: 2px; }
+  .liens-bloc { display: flex; gap: .9rem; flex-wrap: wrap; align-items: center; margin-top: .5rem; }
   ol.parcours { padding-left: 0; list-style: none; counter-reset: temps; }
   ol.parcours > li {
     counter-increment: temps; position: relative;
-    padding: 0 0 1rem 3rem; border-left: 2px solid var(--cadre); margin-left: 1.1rem;
+    padding: 0 0 1.1rem 3rem; border-left: 1px solid var(--cadre); margin-left: 1.1rem;
   }
   ol.parcours > li::before {
     content: counter(temps); position: absolute; left: -1.15rem; top: -.15rem;
     width: 2.1rem; height: 2.1rem; border-radius: 50%;
-    background: var(--fond); color: var(--accent); font-weight: 700;
-    border: 2px solid var(--accent); box-shadow: 0 0 0 1px var(--fond) inset,
-      0 0 0 3px color-mix(in srgb, var(--accent) 35%, transparent);
+    background: var(--fond); color: var(--accent); font-weight: 650;
+    border: 1px solid rgba(62, 207, 142, .45);
+    box-shadow: 0 0 .9rem rgba(62, 207, 142, .25);
     display: flex; align-items: center; justify-content: center;
-    font-family: var(--serif);
   }
   ol.parcours > li:last-child { border-left-color: transparent; }
   ol.parcours strong.titre { display: block; margin-bottom: .15rem; }
   .badge {
-    display: inline-block; font-family: var(--sans); font-size: .68rem;
-    font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
-    border-radius: 2px; padding: .12rem .55rem; vertical-align: middle;
+    display: inline-block; font-size: .72rem; font-weight: 650;
+    letter-spacing: .02em; border-radius: 999px; padding: .14rem .65rem;
+    vertical-align: middle; border: 1px solid;
   }
-  .badge.fait { background: var(--ok-fond); color: var(--ok); border: 1px solid var(--ok); }
-  .badge.avenir { background: var(--attente-fond); color: var(--attente); border: 1px solid var(--attente); }
+  .badge.fait { background: var(--ok-fond); color: var(--ok); border-color: rgba(62, 207, 142, .4); }
+  .badge.avenir { background: rgba(255, 255, 255, .05); color: var(--sourdine); border-color: var(--cadre); }
   hr { border: none; border-top: 1px solid var(--cadre); margin: 2rem 0; }
-  footer { margin-top: 2.5rem; }
+  footer { margin-top: 2.6rem; border-top: 1px solid var(--cadre); padding-top: 1.2rem; }
 </style>
 </head>
 <body>
 <main>
-  <header class="entete">
-    <div class="sceau" aria-hidden="true">⚓</div>
-    <div>
-      <p class="surtitre">sparkso-temoin · registre de preuves</p>
-      <h1>Témoins d'ancrage public</h1>
-      <p class="sous-titre">
-        Comprendre, suivre et vérifier des états certifiés par ancrage public —
-        sans avoir à croire la plateforme qui les a émis.
-      </p>
-    </div>
+  <p class="marque"><span class="etincelle">✦</span>sparkso<span class="demi">-temoin</span></p>
+
+  <header>
+    <h1><span class="grise">Des états certifiés,</span><br>vérifiables par quiconque</h1>
+    <p class="sous-titre">
+      Comprendre, suivre et vérifier des témoins d'ancrage public —
+      sans avoir à croire la plateforme qui les a émis.
+    </p>
   </header>
 
   <nav class="onglets" role="tablist">
