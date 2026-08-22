@@ -1,0 +1,1150 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>Witnesses — understand, follow and verify</title>
+<!--
+  ENGLISH version of verifieur/index.html — keep BOTH files in sync when
+  editing either one. The witness file format itself is language-neutral:
+  its field names (format, hachage, canonique, sel, chemin, racine,
+  attestations, gauche/droite) are FROZEN technical identifiers defined
+  by SPEC.md — they are never translated.
+
+  Self-contained page: no external scripts, no external fonts, no network
+  requests. All computation happens in the browser via the Web Crypto
+  API — you can confirm this in the network tab of your developer tools.
+  This page can be copied as-is into any static export.
+-->
+<style>
+  /* Visual identity: dark, sober, modern — near-black slightly blue
+     background, two-tone text, translucent rounded cards, pill buttons,
+     emerald-green accent and violet glow. Single dark theme. No
+     downloaded font: Inter if installed, otherwise the system font. */
+  :root {
+    --fond: #08090d; --encre: #f4f6f8; --sourdine: #969ba1;
+    --cadre: rgba(255, 255, 255, .1); --panneau: rgba(255, 255, 255, .06);
+    --ok: #3ecf8e; --ok-fond: rgba(62, 207, 142, .1);
+    --attente: #e4c05c; --attente-fond: rgba(228, 192, 92, .09);
+    --echec: #ff6b5e; --echec-fond: rgba(255, 107, 94, .09);
+    --accent: #3ecf8e; --violet: 54, 56, 150;
+    --mono-fond: rgba(255, 255, 255, .07);
+    --sans: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; color: var(--encre);
+    background:
+      radial-gradient(38rem 26rem at 12% -4%, rgba(62, 207, 142, .13), transparent 70%) no-repeat,
+      radial-gradient(44rem 30rem at 88% -2%, rgba(var(--violet), .28), transparent 70%) no-repeat,
+      var(--fond);
+    font: 16px/1.65 var(--sans);
+  }
+  main { max-width: 46rem; margin: 0 auto; padding: 2rem 1.1rem 4.5rem; }
+  .marque {
+    display: flex; align-items: center; gap: .6rem;
+    font-size: 1.05rem; font-weight: 700; letter-spacing: .01em;
+    margin: 0 0 2.6rem; color: var(--encre);
+  }
+  .marque .logo { color: var(--accent); flex: none; display: block; }
+  .marque .demi { color: var(--sourdine); font-weight: 500; }
+  .marque .langue {
+    margin-left: auto; font-size: .8rem; font-weight: 600;
+    color: var(--sourdine); text-decoration: none;
+    border: 1px solid var(--cadre); border-radius: 999px; padding: .3rem .75rem;
+  }
+  .marque .langue:hover { color: var(--accent); border-color: var(--accent); }
+  h1 {
+    font-size: clamp(2.1rem, 6vw, 3rem); line-height: 1.12;
+    font-weight: 450; letter-spacing: -.02em; margin: 0 0 .7rem;
+  }
+  h1 .grise { color: var(--sourdine); }
+  h2 { font-size: 1.32rem; font-weight: 600; letter-spacing: -.01em; margin: 2.2rem 0 .6rem; }
+  h3 { font-size: 1.05rem; font-weight: 600; margin: 1.2rem 0 .35rem; }
+  .sous-titre { color: var(--sourdine); margin: 0 0 1.4rem; font-size: 1.05rem; }
+  .note { color: var(--sourdine); font-size: .89rem; }
+  code, .mono {
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: .8rem; background: var(--mono-fond);
+    border-radius: 6px; padding: .08rem .35rem; overflow-wrap: anywhere;
+  }
+  nav.onglets {
+    display: inline-flex; gap: .2rem; flex-wrap: wrap;
+    background: var(--panneau); border: 1px solid var(--cadre);
+    border-radius: 999px; padding: .28rem; margin: 1.4rem 0 1.8rem;
+  }
+  nav.onglets button {
+    font: inherit; font-size: .86rem; font-weight: 600; color: var(--sourdine);
+    background: none; border: none; border-radius: 999px;
+    padding: .45rem 1rem; cursor: pointer; transition: color .15s, background .15s;
+  }
+  nav.onglets button[aria-selected="true"] {
+    background: var(--encre); color: var(--fond);
+  }
+  .carte {
+    border: 1px solid var(--cadre); border-radius: 16px;
+    padding: 1.05rem 1.25rem; margin: .9rem 0; background: var(--panneau);
+  }
+  .carte h3 { margin-top: 0; }
+  .carte p { margin: .4rem 0; }
+  .depot {
+    border: 1px dashed rgba(255, 255, 255, .22); border-radius: 16px;
+    background: rgba(255, 255, 255, .03);
+    padding: 1.7rem; text-align: center; cursor: pointer;
+    transition: border-color .15s, background .15s;
+  }
+  .depot.survol { border-color: var(--accent); background: var(--ok-fond); }
+  .depot p { margin: .25rem 0; }
+  textarea {
+    width: 100%; min-height: 7rem; margin-top: 1rem; padding: .75rem .9rem;
+    border: 1px solid var(--cadre); border-radius: 12px; resize: vertical;
+    background: rgba(255, 255, 255, .04); color: var(--encre);
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: .8rem;
+  }
+  textarea:focus, .depot:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .actions { display: flex; gap: .6rem; flex-wrap: wrap; margin-top: .8rem; }
+  button {
+    font: inherit; font-size: .88rem; font-weight: 600;
+    padding: .55rem 1.15rem; border-radius: 999px; cursor: pointer;
+    border: 1px solid var(--cadre); background: var(--panneau); color: var(--encre);
+    transition: background .15s, box-shadow .15s;
+  }
+  button:hover { background: rgba(255, 255, 255, .1); }
+  button.principal {
+    background: var(--encre); border-color: var(--encre); color: var(--fond);
+    box-shadow: 0 0 1.4rem rgba(62, 207, 142, .28), 0 0 2.8rem rgba(var(--violet), .3);
+  }
+  button.principal:hover { background: #ffffff; }
+  #resultat { margin-top: 2rem; }
+  .verdict { border-radius: 16px; padding: 1.05rem 1.25rem; margin-bottom: 1rem; border: 1px solid; }
+  .verdict h2 { margin: 0 0 .3rem; font-size: 1.08rem; }
+  .verdict p { margin: .25rem 0; }
+  .verdict.ok { background: var(--ok-fond); border-color: rgba(62, 207, 142, .38); }
+  .verdict.ok h2 { color: var(--ok); }
+  .verdict.attente { background: var(--attente-fond); border-color: rgba(228, 192, 92, .38); }
+  .verdict.attente h2 { color: var(--attente); }
+  .verdict.echec { background: var(--echec-fond); border-color: rgba(255, 107, 94, .38); }
+  .verdict.echec h2 { color: var(--echec); }
+  ol.etapes { padding-left: 1.4rem; margin: 1rem 0; }
+  ol.etapes li { margin: .7rem 0; }
+  ol.etapes .aide { display: block; color: var(--sourdine); font-size: .84rem; margin-top: .18rem; }
+  .puce { font-weight: 700; }
+  .puce.ok { color: var(--ok); }
+  .puce.echec { color: var(--echec); }
+  .puce.neutre { color: var(--attente); }
+  details {
+    margin: .75rem 0; border: 1px solid var(--cadre); border-radius: 12px;
+    padding: .55rem .9rem; background: rgba(255, 255, 255, .03);
+  }
+  summary { cursor: pointer; font-weight: 600; }
+  pre {
+    background: var(--mono-fond); border-radius: 12px; padding: .75rem .9rem;
+    overflow-x: auto; font-size: .8rem; line-height: 1.55;
+  }
+  a { color: var(--accent); text-decoration-color: rgba(62, 207, 142, .4); text-underline-offset: 2px; }
+  .liens-bloc { display: flex; gap: .9rem; flex-wrap: wrap; align-items: center; margin-top: .5rem; }
+  ol.parcours { padding-left: 0; list-style: none; counter-reset: temps; }
+  ol.parcours > li {
+    counter-increment: temps; position: relative;
+    padding: 0 0 1.1rem 3rem; border-left: 1px solid var(--cadre); margin-left: 1.1rem;
+  }
+  ol.parcours > li::before {
+    content: counter(temps); position: absolute; left: -1.15rem; top: -.15rem;
+    width: 2.1rem; height: 2.1rem; border-radius: 50%;
+    background: var(--fond); color: var(--accent); font-weight: 650;
+    border: 1px solid rgba(62, 207, 142, .45);
+    box-shadow: 0 0 .9rem rgba(62, 207, 142, .25);
+    display: flex; align-items: center; justify-content: center;
+  }
+  ol.parcours > li:last-child { border-left-color: transparent; }
+  ol.parcours strong.titre { display: block; margin-bottom: .15rem; }
+  .badge {
+    display: inline-block; font-size: .72rem; font-weight: 650;
+    letter-spacing: .02em; border-radius: 999px; padding: .14rem .65rem;
+    vertical-align: middle; border: 1px solid;
+  }
+  .badge.fait { background: var(--ok-fond); color: var(--ok); border-color: rgba(62, 207, 142, .4); }
+  .badge.avenir { background: rgba(255, 255, 255, .05); color: var(--sourdine); border-color: var(--cadre); }
+  .badge.encours { background: var(--attente-fond); color: var(--attente); border-color: rgba(228, 192, 92, .4); }
+  hr { border: none; border-top: 1px solid var(--cadre); margin: 2rem 0; }
+  footer { margin-top: 2.6rem; border-top: 1px solid var(--cadre); padding-top: 1.2rem; }
+</style>
+</head>
+<body>
+<main>
+  <p class="marque">
+    <!-- The Sparkso mark: a hexagon of 19 hexagons, in green. -->
+    <svg class="logo" width="30" height="30" viewBox="0 0 28 28" fill="none" aria-hidden="true">
+      <g fill="#3ecf8e">
+        <polygon points="14,2.85 14.996,3.425 14.996,4.575 14,5.15 13.004,4.575 13.004,3.425"/>
+        <polygon points="18.33,5.35 19.326,5.925 19.326,7.075 18.33,7.65 17.334,7.075 17.334,5.925"/>
+        <polygon points="22.66,7.85 23.656,8.425 23.656,9.575 22.66,10.15 21.664,9.575 21.664,8.425"/>
+        <polygon points="22.66,12.85 23.656,13.425 23.656,14.575 22.66,15.15 21.664,14.575 21.664,13.425"/>
+        <polygon points="22.66,17.85 23.656,18.425 23.656,19.575 22.66,20.15 21.664,19.575 21.664,18.425"/>
+        <polygon points="18.33,20.35 19.326,20.925 19.326,22.075 18.33,22.65 17.334,22.075 17.334,20.925"/>
+        <polygon points="14,22.85 14.996,23.425 14.996,24.575 14,25.15 13.004,24.575 13.004,23.425"/>
+        <polygon points="9.67,20.35 10.666,20.925 10.666,22.075 9.67,22.65 8.674,22.075 8.674,20.925"/>
+        <polygon points="5.34,17.85 6.336,18.425 6.336,19.575 5.34,20.15 4.344,19.575 4.344,18.425"/>
+        <polygon points="5.34,12.85 6.336,13.425 6.336,14.575 5.34,15.15 4.344,14.575 4.344,13.425"/>
+        <polygon points="5.34,7.85 6.336,8.425 6.336,9.575 5.34,10.15 4.344,9.575 4.344,8.425"/>
+        <polygon points="9.67,5.35 10.666,5.925 10.666,7.075 9.67,7.65 8.674,7.075 8.674,5.925"/>
+      </g>
+      <g fill="#a4ecc9">
+        <polygon points="14,7.3 15.472,8.15 15.472,9.85 14,10.7 12.528,9.85 12.528,8.15"/>
+        <polygon points="18.33,9.8 19.802,10.65 19.802,12.35 18.33,13.2 16.858,12.35 16.858,10.65"/>
+        <polygon points="18.33,14.8 19.802,15.65 19.802,17.35 18.33,18.2 16.858,17.35 16.858,15.65"/>
+        <polygon points="14,17.3 15.472,18.15 15.472,19.85 14,20.7 12.528,19.85 12.528,18.15"/>
+        <polygon points="9.67,14.8 11.142,15.65 11.142,17.35 9.67,18.2 8.198,17.35 8.198,15.65"/>
+        <polygon points="9.67,9.8 11.142,10.65 11.142,12.35 9.67,13.2 8.198,12.35 8.198,10.65"/>
+      </g>
+      <polygon fill="#eefff7"
+        points="14,11.8 15.905,12.9 15.905,15.1 14,16.2 12.095,15.1 12.095,12.9"/>
+    </svg>
+    <span>Sparkso<span class="demi">-temoin</span></span>
+    <a class="langue" href="index.html" lang="fr" hreflang="fr">FR</a>
+  </p>
+
+  <header>
+    <h1><span class="grise">Certified records,</span><br>verifiable by anyone</h1>
+    <p class="sous-titre">
+      Understand, follow and verify publicly anchored witnesses —
+      without having to trust the platform that issued them.
+    </p>
+  </header>
+
+  <nav class="onglets" role="tablist">
+    <button role="tab" aria-selected="true" data-volet="volet-verifier">Verify a witness</button>
+    <button role="tab" aria-selected="false" data-volet="volet-comprendre">Understand the system</button>
+    <button role="tab" aria-selected="false" data-volet="volet-parcours">A witness's journey</button>
+    <button role="tab" aria-selected="false" data-volet="volet-guide">Step-by-step guide</button>
+  </nav>
+
+  <!-- ================== TAB: VERIFY ================== -->
+  <section id="volet-verifier">
+    <p class="note">
+      All computation happens in your browser (Web Crypto API).
+      <strong>Nothing is sent anywhere</strong>: you can confirm this in
+      the network tab of your developer tools, or use this page offline.
+      A witness is the "receipt" handed over when data is sealed — new
+      here? Start with the
+      <a href="#" data-aller="volet-comprendre">Understand the system</a> tab.
+    </p>
+
+    <div id="zone-depot" class="depot" role="button" tabindex="0"
+         aria-label="Drop or choose a witness JSON file">
+      <p><strong>Drop a witness JSON file here</strong></p>
+      <p class="note">or click to choose a file</p>
+      <input id="fichier-temoin" type="file" accept=".json,application/json" hidden>
+    </div>
+
+    <textarea id="texte-temoin" spellcheck="false"
+      placeholder='…or paste the witness here: { "format": 1, "hachage": "sha-256", … }'></textarea>
+
+    <div class="actions">
+      <button id="btn-verifier" class="principal">Verify</button>
+      <button id="btn-exemple" type="button">Try the example from the specification</button>
+      <button id="btn-effacer" type="button">Clear</button>
+    </div>
+
+    <section id="resultat" hidden></section>
+
+    <section id="section-donnees" hidden>
+      <hr>
+      <h2>Compare with the original data (optional)</h2>
+      <p class="note">
+        The witness carries its own copy of the data (the
+        <code>canonique</code> field). If you hold the original sealed
+        file, drop it here: the page then requires strict, byte-for-byte
+        equality — tying the witness to the data you actually hold, not
+        just to its internal copy.
+      </p>
+      <input id="fichier-donnees" type="file">
+      <p id="resultat-donnees"></p>
+    </section>
+  </section>
+
+  <!-- ================== TAB: UNDERSTAND ================== -->
+  <section id="volet-comprendre" hidden>
+    <h2>The goal, in one sentence</h2>
+    <p>
+      Make it possible to prove, later and to anyone, that <strong>a
+      given document already existed at a given time and has not been
+      modified since</strong> — without ever publishing the document
+      itself.
+    </p>
+    <p>
+      It is the digital equivalent of a dated wax seal, except that the
+      "register" dating the seal is public and tamper-proof (the Bitcoin
+      blockchain), and anyone can redo the verification without taking
+      the platform's word for it.
+    </p>
+
+    <h2>The four basic ideas</h2>
+
+    <div class="carte">
+      <h3>1. The fingerprint</h3>
+      <p>
+        A document is never published. Instead we compute its
+        <strong>fingerprint</strong>: a kind of 64-character digital
+        fingerprint, produced by a standard mathematical computation
+        (called SHA-256). Two properties matter: the same document always
+        gives the same fingerprint, and it is impossible to reconstruct
+        the document from the fingerprint. This fingerprint — and nothing
+        else — is what ever leaves the data owner's premises.
+      </p>
+      <p class="note">
+        Beforehand, the data is written in a unique, normalized form
+        (called "canonical"): same data ⇒ same text, byte for byte ⇒ same
+        fingerprint, whatever software is used.
+      </p>
+    </div>
+
+    <div class="carte">
+      <h3>2. The salt</h3>
+      <p>
+        Problem: if a document is easy to guess (say, "grade: 12/20"),
+        someone could try every possibility and compare fingerprints. The
+        countermeasure: before computing, a <strong>salt</strong> is mixed
+        into the document — a large secret random number, different for
+        every document, kept by the data owner. Without the salt, nothing
+        can be confirmed at all.
+      </p>
+    </div>
+
+    <div class="carte">
+      <h3>3. The tree (a "Merkle" tree)</h3>
+      <p>
+        Publishing one fingerprint per document would be costly. So
+        fingerprints are combined two by two, then two by two again,
+        until <strong>a single summary fingerprint</strong> remains: the
+        <strong>root</strong>. Like a sports tournament: many
+        participants, a single final. Only the root is published — and
+        each document keeps the list of its "matches" (its
+        <strong>path</strong>) to prove it leads to that root.
+      </p>
+    </div>
+
+    <div class="carte">
+      <h3>4. Anchoring</h3>
+      <p>
+        The root is deposited into the Bitcoin blockchain, via a free,
+        standard service called <a href="https://opentimestamps.org/"
+        rel="noopener">OpenTimestamps</a>. The blockchain is a public
+        register where every page (a <strong>block</strong>) is numbered
+        and impossible to rewrite. Once the root is in block number B, we
+        can state: "everything that led to this root existed
+        <strong>no later than</strong> when block B was written".
+      </p>
+    </div>
+
+    <h2>The witness: the final receipt</h2>
+    <p>
+      The <strong>witness</strong> (in French: <em>témoin</em>) is the
+      receipt handed to the document's owner: a small JSON file
+      containing everything needed to redo the verification — the data
+      (in its canonical form), the salt, the path in the tree, the root,
+      and the proof of the Bitcoin deposit (the
+      <strong>attestation</strong>). Whoever holds a witness can prove
+      their document's anteriority to anyone, even if the issuing
+      platform has disappeared.
+    </p>
+
+    <h2>A witness JSON file, concretely</h2>
+    <p>
+      "JSON" is simply a <strong>text</strong> file format, readable by
+      humans and machines alike: "name: value" pairs between braces.
+      Here is a real witness — the one used by the example in the Verify
+      tab — then each field in plain language. Note: the field names are
+      French words (<code>sel</code>, <code>racine</code>…) because they
+      are <strong>frozen technical identifiers</strong> defined by the
+      public specification — like the English keywords found in most file
+      formats, they are never translated:
+    </p>
+    <pre>{
+  "format": 1,
+  "hachage": "sha-256",
+  "canonique": "{\"n\":3}",
+  "sel": "3333333333333333333333333333333333333333333333333333333333333333",
+  "chemin": [
+    { "cote": "gauche", "empreinte": "619d2265…4d659f35" }
+  ],
+  "racine": "c6c5f461…106ebe8e",
+  "attestations": []
+}</pre>
+    <ul>
+      <li><code>format</code> — the version of the rulebook, so that a
+        verifier in 2036 still knows how to read this receipt.</li>
+      <li><code>hachage</code> — "hash": the fingerprint function used
+        (SHA-256).</li>
+      <li><code>canonique</code> — "canonical": <strong>the sealed data
+        itself</strong>, in its unique normalized form.</li>
+      <li><code>sel</code> — "salt": the secret number specific to this
+        record, written in hexadecimal (64 characters for 32 bytes).</li>
+      <li><code>chemin</code> — "path": the list of tournament "matches",
+        from this document's fingerprint up to the summary, each saying
+        whether the partner was on the left (<code>gauche</code>) or the
+        right (<code>droite</code>).</li>
+      <li><code>racine</code> — "root": the single summary fingerprint,
+        the one deposited into Bitcoin.</li>
+      <li><code>attestations</code> — the proofs of the deposit. Empty as
+        here: the witness is awaiting anchoring and does not prove any
+        anteriority yet.</li>
+    </ul>
+
+    <h2>What the proof guarantees — exactly</h2>
+    <p>
+      A valid witness proves: <em>"these bytes existed no later than when
+      block B was mined"</em>. Nothing more. We never say "on January 15
+      at 8:30am": the displayed time of a Bitcoin block can drift by
+      about two hours — we only promise what we can keep. And a witness
+      proves neither the accuracy nor the sincerity of the content: it
+      proves the anteriority and integrity of precise bytes. That is why
+      we speak of "records certified by public anchoring", never of
+      "official" documents: legal value depends on applicable law; the
+      technical proof, however, is strong.
+    </p>
+
+    <h2>What about the right to erasure? (GDPR)</h2>
+    <p>
+      The blockchain carries <strong>no personal data</strong>, ever —
+      only salted fingerprints, mute by construction. The day data must
+      be erased, the data and its salt are destroyed: the published
+      fingerprint becomes permanently inert — it no longer allows anyone
+      to recover or even confirm anything. This mechanism is called
+      <em>crypto-shredding</em>: what is erasable lives off-chain, and
+      what is on-chain never carried anything erasable.
+    </p>
+
+    <h2>Why trust this page?</h2>
+    <p>
+      Precisely: you don't have to. It redoes all computations locally,
+      in your browser, sending nothing (verifiable in the network tab).
+      The anchoring proof can be observed on independent public websites,
+      and the <code>.ots</code> proof file can be checked with the
+      official OpenTimestamps client — a third party's tool. The complete
+      computation rules are published in the project's specification
+      (<code>SPEC.md</code>), with worked numeric examples allowing
+      anyone to write their own verifier.
+    </p>
+  </section>
+
+  <!-- ================== TAB: JOURNEY ================== -->
+  <section id="volet-parcours" hidden>
+    <h2>A witness's life, in six stages</h2>
+    <p class="note">
+      From document to verifiable receipt: what happens, in order, at
+      each sealing. Stages 1 to 4 are pure offline computation; only
+      stage 5 touches the Internet.
+    </p>
+    <ol class="parcours">
+      <li>
+        <strong class="titre">Canonical form</strong>
+        The data to seal (a grade, a diploma, any record) is written in
+        its unique, normalized form: same data, same text, byte for byte.
+      </li>
+      <li>
+        <strong class="titre">Salt</strong>
+        A large secret random number is drawn for this specific record
+        and entrusted to the data owner. It stays off-chain, stored and
+        destroyed together with the data.
+      </li>
+      <li>
+        <strong class="titre">Fingerprint</strong>
+        The salt and the canonical data are mixed then passed through
+        SHA-256: this is the record's digital fingerprint (its "leaf").
+      </li>
+      <li>
+        <strong class="titre">Tree and root</strong>
+        All the batch's leaves are combined two by two, tournament-style,
+        down to the single summary fingerprint: the root. Each record
+        keeps its path to it.
+      </li>
+      <li>
+        <strong class="titre">Anchoring into Bitcoin</strong>
+        The root — it alone — is deposited via OpenTimestamps. The proof
+        is first <em>incomplete</em> (queued); a few hours later, after
+        confirmation in a numbered block, it is <em>completed</em>. This
+        is the only moment the system touches the network.
+      </li>
+      <li>
+        <strong class="titre">Handing over the witness</strong>
+        Each owner receives their receipt: canonical data + salt + path +
+        root + attestation. From then on they can have everything
+        verified, right here or with independent tools — forever.
+      </li>
+    </ol>
+
+    <h2>The project's building blocks, and where it stands</h2>
+    <p class="note">
+      This tab doubles as a progress board: for the Sparkso team to
+      follow the build, and for any client to know what exists and what
+      is coming.
+    </p>
+
+    <div class="carte">
+      <h3>The specification (SPEC.md) <span class="badge fait">Done — August 21, 2026</span></h3>
+      <p>
+        The rulebook, written down before any line of code: witness
+        format, exact computation recipes, precise guarantee, erasure
+        section, and worked numeric examples in the appendix. It is what
+        ensures a receipt issued in 2026 remains verifiable in 2036, even
+        without our code.
+      </p>
+    </div>
+    <div class="carte">
+      <h3>The verification page <span class="badge fait">Done — August 21, 2026</span></h3>
+      <p>
+        This very page: a single file, copyable onto each client's
+        website, redoing all computations in the browser. See the
+        "Verify a witness" tab.
+      </p>
+    </div>
+    <div class="carte">
+      <h3>The library (lib/) <span class="badge fait">Done — August 22, 2026</span></h3>
+      <p>
+        The code that manufactures witnesses — the "production" side,
+        where this page is the "control" side. Its conformance is proven
+        by automated tests replaying every numeric example of the
+        specification.
+      </p>
+    </div>
+    <div class="carte">
+      <h3>The extraction format (EXTRACTION.md) <span class="badge fait">Done — August 22, 2026</span></h3>
+      <p>
+        The bridge between each platform (Sparkso Universités for IUGM,
+        or any other) and this system: a standard JSON file, the
+        "extraction batch", which the platform produces in one click from
+        an explicit place in its administration (an "Anchoring" section),
+        and which the tool seals without knowing anything about the
+        business domain. In return the platform receives the salts, the
+        witnesses and the proof.
+      </p>
+    </div>
+    <div class="carte">
+      <h3>The command-line tool (cli/) <span class="badge fait">Done — August 22, 2026</span></h3>
+      <p>
+        Four commands following a batch's life, each explaining what it
+        does in plain language: <code>emettre</code> (manufacture the
+        witnesses of an extraction batch), <code>ancrer</code> (deposit
+        the root into Bitcoin via OpenTimestamps), <code>completer</code>
+        (fetch the confirmed proof and add it to the witnesses),
+        <code>verifier</code> (check a witness step by step). Only
+        <code>ancrer</code> and <code>completer</code> touch the network.
+      </p>
+    </div>
+    <div class="carte">
+      <h3>The proof milestone <span class="badge encours">In progress — anchored August 22, 2026</span></h3>
+      <p>
+        The full-scale test: a demo batch has actually been anchored —
+        its root is deposited with four public OpenTimestamps calendars,
+        awaiting Bitcoin confirmation (a few hours). Next: complete the
+        proof, then have it verified by the official OpenTimestamps tool
+        — somebody else's tool. If it says "valid", compatibility with
+        the standard is proven, not merely claimed. This real case will
+        become the documentation's canonical example.
+      </p>
+    </div>
+
+    <p class="note">
+      Deliberate boundary: this system is generic — bytes in, a witness
+      out. Choosing <em>what</em> to seal, when, and how to keep the data
+      and the salts belongs to each project using it (Sparkso
+      Universités first).
+    </p>
+  </section>
+
+  <!-- ================== TAB: STEP-BY-STEP GUIDE ================== -->
+  <section id="volet-guide" hidden>
+    <h2>Verify your witness, step by step</h2>
+    <p>
+      This guide is for everyone — student, employer, family,
+      administration. No technical knowledge is needed: if you can open a
+      file, you can verify a witness.
+    </p>
+    <ol class="parcours">
+      <li>
+        <strong class="titre">Find your witness file</strong>
+        It is a small file that was handed to you (by your university,
+        for example), whose name ends in <code>.temoin.json</code>. Keep
+        it safe, like a personal document: it contains your data and a
+        secret code.
+      </li>
+      <li>
+        <strong class="titre">Open the verification page</strong>
+        That's the page you are on. Each institution hosts it at its own
+        address, but all copies are identical — and you can use any of
+        them: the page only computes, on your machine, and sends nothing.
+      </li>
+      <li>
+        <strong class="titre">Drop the file</strong>
+        Go to the "Verify a witness" tab and drag your file into the
+        dashed frame (or click the frame to pick it from your computer).
+        Verification starts by itself, in under a second.
+      </li>
+      <li>
+        <strong class="titre">Read the result</strong>
+        A colored panel appears: <strong>green</strong>,
+        <strong>amber</strong> or <strong>red</strong>. The exact meaning
+        of each color is detailed right below this guide. Under the
+        panel, every computation step is displayed and explained in plain
+        language.
+      </li>
+      <li>
+        <strong class="titre">If it's green: see for yourself</strong>
+        The green panel shows a Bitcoin block number and a "View the
+        block" link. Click it: you land on a public website independent
+        from us (an "explorer"). If the block's page exists and carries
+        the same number, you have your confirmation: your data existed no
+        later than that block, and has not changed since.
+      </li>
+    </ol>
+
+    <h2>The three possible results</h2>
+    <div class="carte">
+      <h3><span class="puce ok">●</span> Green — "Consistent with its witness"</h3>
+      <p>
+        All is well: the computations confirm the witness, and the root
+        is anchored in a specific Bitcoin block. There is nothing for you
+        to do — your proof is solid and will remain so, even if the
+        platform that issued it disappears one day.
+      </p>
+    </div>
+    <div class="carte">
+      <h3><span class="puce neutre">●</span> Amber — "Consistent, but no proof of anteriority yet"</h3>
+      <p>
+        The computations are correct, but nothing ties this witness to
+        the blockchain yet: either anchoring has not happened yet, or it
+        is awaiting Bitcoin confirmation (a few hours). This is a normal,
+        temporary state right after a sealing. If it lasts several days,
+        report it to the witness's issuer.
+      </p>
+    </div>
+    <div class="carte">
+      <h3><span class="puce echec">●</span> Red — "Not consistent"</h3>
+      <p>
+        The computations do not confirm this witness: the file was
+        modified, damaged (for instance during a copy), or is malformed.
+        It does not mean your data is wrong — it means <em>this
+        particular file</em> proves nothing. Ask the issuer to re-deliver
+        your witness.
+      </p>
+    </div>
+
+    <h2>Frequently asked questions</h2>
+    <details>
+      <summary>How did I receive this file? Where do I find it?</summary>
+      <p>
+        Your institution hands it to you, usually through a "Download my
+        witness" button in your personal account (one file per sealed
+        item: transcript, diploma…). Once downloaded, it sits on your
+        computer, often in the "Downloads" folder — look for a name
+        ending in <code>.temoin.json</code>. There is nothing to
+        "install": it is a plain file, yours, forever.
+      </p>
+    </details>
+    <details>
+      <summary>The file contains French words — does it work outside France?</summary>
+      <p>
+        Yes, everywhere. The words inside the file (<code>temoin</code>,
+        <code>racine</code>, <code>gauche</code>…) are not "language":
+        they are <strong>frozen technical identifiers</strong>, defined
+        once and for all by the format's public specification — just like
+        the English keywords found in most computer formats are never
+        translated. Software from any country reads them as-is, and this
+        page also exists <a href="index.html">in French</a>: both verify
+        exactly the same files.
+      </p>
+    </details>
+    <details>
+      <summary>Does my witness file contain sensitive information?</summary>
+      <p>
+        Yes: it contains your data (readable) and the secret code
+        protecting it. Treat it like a paper transcript or diploma: keep
+        it at home, do not publish it. Handing it to someone means
+        showing them your data — which is exactly what it is for, when
+        <em>you</em> decide to.
+      </p>
+    </details>
+    <details>
+      <summary>I lost my witness file. Is that serious?</summary>
+      <p>
+        No: the institution that issued it keeps what is needed to
+        re-deliver it identically. The proof inside Bitcoin, for its
+        part, never moves.
+      </p>
+    </details>
+    <details>
+      <summary>Do I need the Internet to verify?</summary>
+      <p>
+        The computations (steps 1 to 4) work even offline. The Internet
+        is needed for one thing only: clicking the link to the public
+        explorer to observe the Bitcoin block.
+      </p>
+    </details>
+    <details>
+      <summary>Why should I trust this page?</summary>
+      <p>
+        You don't have to: it sends nothing anywhere (any IT person's
+        tools can confirm that), and everything it computes can be
+        recomputed by an independent program, written by anyone, from the
+        system's public rules. Technical users can also check the
+        <code>.ots</code> proof with the
+        <a href="https://opentimestamps.org/" rel="noopener">official
+        OpenTimestamps client</a> — a tool we did not write.
+      </p>
+    </details>
+    <details>
+      <summary>What exactly does a green result prove?</summary>
+      <p>
+        Two things, and two only: this data <strong>existed no later
+        than</strong> the indicated block, and it <strong>has not been
+        modified</strong> since. The witness does not say whether the
+        content is accurate or sincere — that is up to the institution
+        that issued it, as with a paper document.
+      </p>
+    </details>
+
+    <p class="note">
+      A doubt, a question, a red result? The right reflex is always the
+      same: contact the institution that handed you the witness.
+    </p>
+  </section>
+
+  <footer class="note">
+    <p>
+      A valid witness proves exactly: "these bytes existed no later than
+      when block B was mined". Never "on such date at such time": the
+      displayed timestamp of a Bitcoin block tolerates about two hours of
+      drift.
+    </p>
+    <p>
+      Scope of this page (v1): it recomputes the fingerprint and the
+      Merkle path up to the root R. Full checking of the OpenTimestamps
+      proof (<code>.ots</code>, downloadable once an anchored witness is
+      loaded) is done with the
+      <a href="https://opentimestamps.org/" rel="noopener">official OpenTimestamps client</a> —
+      a third party's tool, precisely so you don't have to trust us.
+    </p>
+  </footer>
+</main>
+
+<script>
+'use strict';
+
+/* ---------- Tab navigation ---------- */
+
+const onglets = document.querySelectorAll('nav.onglets button');
+function afficherVolet(identifiant) {
+  for (const onglet of onglets) {
+    const actif = onglet.dataset.volet === identifiant;
+    onglet.setAttribute('aria-selected', String(actif));
+    document.getElementById(onglet.dataset.volet).hidden = !actif;
+  }
+}
+for (const onglet of onglets) {
+  onglet.addEventListener('click', () => afficherVolet(onglet.dataset.volet));
+}
+for (const lien of document.querySelectorAll('[data-aller]')) {
+  lien.addEventListener('click', evenement => {
+    evenement.preventDefault();
+    afficherVolet(lien.dataset.aller);
+    window.scrollTo({ top: 0 });
+  });
+}
+
+/* ---------- Byte helpers ---------- */
+
+function hexVersOctets(hex, tailleAttendue, nomChamp) {
+  if (typeof hex !== 'string' || !/^[0-9a-f]*$/.test(hex) || hex.length % 2 !== 0) {
+    throw new Error(nomChamp + ': lowercase hexadecimal expected.');
+  }
+  const octets = new Uint8Array(hex.length / 2);
+  for (let i = 0; i < octets.length; i++) {
+    octets[i] = parseInt(hex.slice(2 * i, 2 * i + 2), 16);
+  }
+  if (tailleAttendue !== null && octets.length !== tailleAttendue) {
+    throw new Error(nomChamp + ': expected ' + tailleAttendue + ' bytes, got ' +
+      octets.length + '.');
+  }
+  return octets;
+}
+
+function octetsVersHex(octets) {
+  return Array.from(octets, o => o.toString(16).padStart(2, '0')).join('');
+}
+
+function concat(...morceaux) {
+  const total = morceaux.reduce((n, m) => n + m.length, 0);
+  const sortie = new Uint8Array(total);
+  let position = 0;
+  for (const m of morceaux) { sortie.set(m, position); position += m.length; }
+  return sortie;
+}
+
+function memesOctets(a, b) {
+  if (a.length !== b.length) return false;
+  let difference = 0;
+  for (let i = 0; i < a.length; i++) difference |= a[i] ^ b[i];
+  return difference === 0;
+}
+
+async function sha256(octets) {
+  return new Uint8Array(await crypto.subtle.digest('SHA-256', octets));
+}
+
+/* ---------- Verification (SPEC.md §9) ---------- */
+
+const PREFIXE_FEUILLE = new Uint8Array([0x00]);
+const PREFIXE_NOEUD = new Uint8Array([0x01]);
+
+// Folds the Merkle path (SPEC.md §6.1). `cote` is the position of the
+// SIBLING fingerprint, not of the current node.
+async function repli(feuille, chemin) {
+  let courant = feuille;
+  for (let i = 0; i < chemin.length; i++) {
+    const maillon = chemin[i];
+    if (typeof maillon !== 'object' || maillon === null) {
+      throw new Error('chemin[' + i + ']: expected an object {cote, empreinte}.');
+    }
+    const soeur = hexVersOctets(maillon.empreinte, 32, 'chemin[' + i + '].empreinte');
+    if (maillon.cote === 'gauche') {
+      courant = await sha256(concat(PREFIXE_NOEUD, soeur, courant));
+    } else if (maillon.cote === 'droite') {
+      courant = await sha256(concat(PREFIXE_NOEUD, courant, soeur));
+    } else {
+      throw new Error('chemin[' + i + '].cote: expected "gauche" or "droite".');
+    }
+  }
+  return courant;
+}
+
+// Verifies a witness; returns { etapes, calcul, ancrage }. Each step
+// carries a plain-language help sentence, displayed under the result.
+async function verifierTemoin(temoin) {
+  const etapes = [];
+  const calcul = {};
+
+  // Step 1 — format.
+  const AIDE_FORMAT = 'First we read the receipt’s label: format version and ' +
+    'fingerprint function used. Without it, we would not know how to verify.';
+  if (temoin.format !== 1) {
+    etapes.push({ ok: false, texte: 'Format: "format" must be 1 (got: ' +
+      JSON.stringify(temoin.format) + ').', aide: AIDE_FORMAT });
+    return { etapes, calcul, ancrage: null };
+  }
+  if (temoin.hachage !== 'sha-256') {
+    etapes.push({ ok: false, texte: 'Format: "hachage" must be "sha-256" (got: ' +
+      JSON.stringify(temoin.hachage) + ').', aide: AIDE_FORMAT });
+    return { etapes, calcul, ancrage: null };
+  }
+  etapes.push({ ok: true, texte: 'Format recognized: witness v1, sha-256 hashing.',
+    aide: AIDE_FORMAT });
+
+  // Step 2 — leaf fingerprint: h = H(0x00 ‖ salt ‖ canonical).
+  const AIDE_FEUILLE = 'The page recomputes the data’s digital fingerprint: the ' +
+    'secret salt is mixed with the data, and the whole passed through SHA-256. ' +
+    'Change a single character, and this fingerprint would be entirely different.';
+  if (typeof temoin.canonique !== 'string') {
+    etapes.push({ ok: false, texte: 'Leaf: "canonique" must be a string.',
+      aide: AIDE_FEUILLE });
+    return { etapes, calcul, ancrage: null };
+  }
+  let feuille;
+  try {
+    const sel = hexVersOctets(temoin.sel, 32, 'sel');
+    const canonique = new TextEncoder().encode(temoin.canonique);
+    feuille = await sha256(concat(PREFIXE_FEUILLE, sel, canonique));
+  } catch (erreur) {
+    etapes.push({ ok: false, texte: 'Leaf: ' + erreur.message, aide: AIDE_FEUILLE });
+    return { etapes, calcul, ancrage: null };
+  }
+  calcul.feuille = octetsVersHex(feuille);
+  etapes.push({ ok: true,
+    texte: 'Data fingerprint recomputed: ',
+    code: calcul.feuille, aide: AIDE_FEUILLE });
+
+  // Step 3 — folding the path.
+  const AIDE_CHEMIN = 'It then replays the “tournament”: the fingerprint is ' +
+    'combined with its neighbours, level by level, up to the single summary ' +
+    'fingerprint (the root).';
+  if (!Array.isArray(temoin.chemin)) {
+    etapes.push({ ok: false, texte: 'Path: "chemin" must be an array.',
+      aide: AIDE_CHEMIN });
+    return { etapes, calcul, ancrage: null };
+  }
+  let racineRecalculee;
+  try {
+    racineRecalculee = await repli(feuille, temoin.chemin);
+  } catch (erreur) {
+    etapes.push({ ok: false, texte: 'Path: ' + erreur.message, aide: AIDE_CHEMIN });
+    return { etapes, calcul, ancrage: null };
+  }
+  calcul.racineRecalculee = octetsVersHex(racineRecalculee);
+  etapes.push({ ok: true,
+    texte: 'Path replayed (' + temoin.chemin.length +
+      (temoin.chemin.length > 1 ? ' levels' : ' level') + '); root obtained: ',
+    code: calcul.racineRecalculee, aide: AIDE_CHEMIN });
+
+  // Step 4 — comparison with the declared root (on decoded bytes).
+  const AIDE_RACINE = 'The recomputed root must be identical to the one written in ' +
+    'the witness. Identical = neither the data, nor the salt, nor the path were altered.';
+  let racineAnnoncee;
+  try {
+    racineAnnoncee = hexVersOctets(temoin.racine, 32, 'racine');
+  } catch (erreur) {
+    etapes.push({ ok: false, texte: 'Root: ' + erreur.message, aide: AIDE_RACINE });
+    return { etapes, calcul, ancrage: null };
+  }
+  if (!memesOctets(racineRecalculee, racineAnnoncee)) {
+    etapes.push({ ok: false,
+      texte: 'The recomputed root does NOT match the witness’s root: ',
+      code: temoin.racine, aide: AIDE_RACINE });
+    return { etapes, calcul, ancrage: null };
+  }
+  etapes.push({ ok: true, texte: 'The recomputed root is identical to the witness’s root.',
+    aide: AIDE_RACINE });
+
+  // Step 5 — attestations. Unknown types are ignored without error.
+  const attestations = Array.isArray(temoin.attestations) ? temoin.attestations : [];
+  const ots = attestations.filter(a => a && a.type === 'ots');
+  const completes = ots.filter(a => Number.isInteger(a.bloc));
+  const ancrage = {
+    aucune: attestations.length === 0,
+    incompletes: ots.length - completes.length,
+    completes: completes,
+    inconnues: attestations.length - ots.length
+  };
+  return { etapes, calcul, ancrage };
+}
+
+/* ---------- Interface ---------- */
+
+const zoneDepot = document.getElementById('zone-depot');
+const champFichier = document.getElementById('fichier-temoin');
+const champTexte = document.getElementById('texte-temoin');
+const sectionResultat = document.getElementById('resultat');
+const sectionDonnees = document.getElementById('section-donnees');
+const champDonnees = document.getElementById('fichier-donnees');
+const resultatDonnees = document.getElementById('resultat-donnees');
+
+let temoinCourant = null; // last verified witness, for the data comparison
+
+// Example: vector C from appendix A of SPEC.md (witness awaiting anchoring).
+const EXEMPLE = {
+  format: 1,
+  hachage: 'sha-256',
+  canonique: '{"n":3}',
+  sel: '3333333333333333333333333333333333333333333333333333333333333333',
+  chemin: [
+    { cote: 'gauche',
+      empreinte: '619d2265e7a293938e0caf3207c4015658312d78db8d24b8e11bbffd4d659f35' }
+  ],
+  racine: 'c6c5f4615cc9a453def6b0a1b6999de9528c194a102983475a3e7e84106ebe8e',
+  attestations: []
+};
+
+function element(balise, attributs, ...enfants) {
+  const noeud = document.createElement(balise);
+  for (const [cle, valeur] of Object.entries(attributs || {})) {
+    if (cle === 'texte') noeud.textContent = valeur;
+    else noeud.setAttribute(cle, valeur);
+  }
+  for (const enfant of enfants) noeud.append(enfant);
+  return noeud;
+}
+
+function afficherErreur(message) {
+  sectionResultat.hidden = false;
+  sectionResultat.replaceChildren(
+    element('div', { class: 'verdict echec' },
+      element('h2', { texte: 'Unreadable witness' }),
+      element('p', { texte: message }))
+  );
+  sectionDonnees.hidden = true;
+}
+
+async function lancerVerification(texte) {
+  let temoin;
+  try {
+    temoin = JSON.parse(texte);
+  } catch (_erreur) {
+    afficherErreur('This content is not valid JSON. A witness is a small text ' +
+      'file in JSON format, handed over at sealing time.');
+    return;
+  }
+  if (typeof temoin !== 'object' || temoin === null || Array.isArray(temoin)) {
+    afficherErreur('A witness is a JSON object.');
+    return;
+  }
+
+  const { etapes, calcul, ancrage } = await verifierTemoin(temoin);
+  const conforme = etapes.every(e => e.ok) && ancrage !== null;
+  temoinCourant = conforme ? temoin : null;
+
+  const fragments = [];
+
+  // Verdict.
+  if (!conforme) {
+    fragments.push(element('div', { class: 'verdict echec' },
+      element('h2', { texte: 'Not consistent with its witness' }),
+      element('p', { texte: 'The recomputation does not confirm this witness: it was ' +
+        'either altered or malformed. The step-by-step detail is below.' })));
+  } else if (ancrage.completes.length > 0) {
+    const verdict = element('div', { class: 'verdict ok' },
+      element('h2', { texte: 'Consistent with its witness' }));
+    for (const attestation of ancrage.completes) {
+      verdict.append(element('p', {},
+        'Root ', element('code', { texte: temoin.racine }),
+        ' to be observed in Bitcoin block ',
+        element('strong', { texte: String(attestation.bloc) }), '.'));
+      const liens = element('div', { class: 'liens-bloc' });
+      liens.append(
+        element('a', { href: 'https://mempool.space/block/' + attestation.bloc,
+          target: '_blank', rel: 'noopener',
+          texte: 'View block ' + attestation.bloc + ' on mempool.space' }),
+        element('a', { href: 'https://blockstream.info/block-height/' + attestation.bloc,
+          target: '_blank', rel: 'noopener',
+          texte: 'on blockstream.info' }));
+      if (typeof attestation.preuve === 'string') {
+        const bouton = element('button', { type: 'button', texte: 'Download the .ots proof' });
+        bouton.addEventListener('click', () => {
+          try {
+            const brut = atob(attestation.preuve);
+            const octets = Uint8Array.from(brut, c => c.charCodeAt(0));
+            const url = URL.createObjectURL(new Blob([octets], { type: 'application/octet-stream' }));
+            const lien = element('a', { href: url, download: 'preuve.ots' });
+            document.body.append(lien); lien.click(); lien.remove();
+            setTimeout(() => URL.revokeObjectURL(url), 5000);
+          } catch (_erreur) {
+            bouton.textContent = 'Unreadable proof (invalid base64)';
+          }
+        });
+        liens.append(bouton);
+      }
+      verdict.append(liens);
+    }
+    verdict.append(element('p', { class: 'note',
+      texte: 'The link between the root and the block is carried by the .ots proof; ' +
+        'its full check is done with the official OpenTimestamps client ' +
+        '(ots verify), outside the browser in v1.' }));
+    fragments.push(verdict);
+  } else {
+    const raison = ancrage.incompletes > 0
+      ? 'The OpenTimestamps proof is still incomplete: it awaits its Bitcoin ' +
+        'confirmation (a few hours), then must be completed.'
+      : (ancrage.aucune
+        ? 'This witness carries no attestation: it is awaiting anchoring.'
+        : 'None of this witness’s attestations is of a type known to this page (v1: "ots").');
+    fragments.push(element('div', { class: 'verdict attente' },
+      element('h2', { texte: 'Consistent with its witness — no anteriority proven' }),
+      element('p', { texte: 'The computations are correct, but nothing ties this ' +
+        'witness to the blockchain yet. ' + raison })));
+  }
+
+  // Steps, each with its explanation sentence.
+  const liste = element('ol', { class: 'etapes' });
+  for (const etape of etapes) {
+    const item = element('li', {},
+      element('span', { class: 'puce ' + (etape.ok ? 'ok' : 'echec'),
+        texte: etape.ok ? '✓ ' : '✗ ' }),
+      etape.texte);
+    if (etape.code) item.append(element('code', { texte: etape.code }));
+    if (etape.aide) item.append(element('span', { class: 'aide', texte: etape.aide }));
+    liste.append(item);
+  }
+  if (conforme) {
+    const item = element('li', {},
+      element('span', { class: 'puce ' + (ancrage.completes.length > 0 ? 'ok' : 'neutre'),
+        texte: ancrage.completes.length > 0 ? '✓ ' : '… ' }),
+      'Anchoring attestations: ' + ancrage.completes.length + ' complete, ' +
+      ancrage.incompletes + ' incomplete, ' + ancrage.inconnues +
+      ' of unknown type (ignored).',
+      element('span', { class: 'aide',
+        texte: 'A complete attestation designates the Bitcoin block where the root ' +
+          'is anchored — it is what provides the proof of anteriority.' }));
+    liste.append(item);
+  }
+  fragments.push(liste);
+
+  // Sealed data, readable.
+  const bloc = element('details', {},
+    element('summary', { texte: 'See the sealed data (canonique field)' }));
+  let joli = temoin.canonique;
+  try { joli = JSON.stringify(JSON.parse(temoin.canonique), null, 2); } catch (_erreur) { /* as-is */ }
+  bloc.append(element('pre', { texte: joli }));
+  if (typeof temoin.canonique === 'string') fragments.push(bloc);
+
+  sectionResultat.hidden = false;
+  sectionResultat.replaceChildren(...fragments);
+  sectionDonnees.hidden = !conforme;
+  resultatDonnees.textContent = '';
+  champDonnees.value = '';
+}
+
+/* ---------- Events ---------- */
+
+zoneDepot.addEventListener('click', () => champFichier.click());
+zoneDepot.addEventListener('keydown', evenement => {
+  if (evenement.key === 'Enter' || evenement.key === ' ') champFichier.click();
+});
+zoneDepot.addEventListener('dragover', evenement => {
+  evenement.preventDefault();
+  zoneDepot.classList.add('survol');
+});
+zoneDepot.addEventListener('dragleave', () => zoneDepot.classList.remove('survol'));
+zoneDepot.addEventListener('drop', async evenement => {
+  evenement.preventDefault();
+  zoneDepot.classList.remove('survol');
+  const fichier = evenement.dataTransfer.files[0];
+  if (!fichier) return;
+  const texte = await fichier.text();
+  champTexte.value = texte;
+  lancerVerification(texte);
+});
+champFichier.addEventListener('change', async () => {
+  const fichier = champFichier.files[0];
+  if (!fichier) return;
+  const texte = await fichier.text();
+  champTexte.value = texte;
+  lancerVerification(texte);
+});
+
+document.getElementById('btn-verifier').addEventListener('click', () => {
+  const texte = champTexte.value.trim();
+  if (!texte) { afficherErreur('Drop, choose or paste a witness first.'); return; }
+  lancerVerification(texte);
+});
+document.getElementById('btn-exemple').addEventListener('click', () => {
+  champTexte.value = JSON.stringify(EXEMPLE, null, 2);
+  lancerVerification(champTexte.value);
+});
+document.getElementById('btn-effacer').addEventListener('click', () => {
+  champTexte.value = '';
+  sectionResultat.hidden = true;
+  sectionDonnees.hidden = true;
+  temoinCourant = null;
+});
+
+// Optional comparison with the original data (SPEC.md §9, last paragraph).
+champDonnees.addEventListener('change', async () => {
+  const fichier = champDonnees.files[0];
+  if (!fichier || !temoinCourant) return;
+  const octetsFichier = new Uint8Array(await fichier.arrayBuffer());
+  const octetsCanonique = new TextEncoder().encode(temoinCourant.canonique);
+  if (memesOctets(octetsFichier, octetsCanonique)) {
+    resultatDonnees.innerHTML = '';
+    resultatDonnees.append(
+      element('span', { class: 'puce ok', texte: '✓ ' }),
+      'The dropped file is byte-for-byte identical to the witness’s canonique field.');
+  } else {
+    resultatDonnees.innerHTML = '';
+    resultatDonnees.append(
+      element('span', { class: 'puce echec', texte: '✗ ' }),
+      'The dropped file differs from the witness’s canonique field (' +
+      octetsFichier.length + ' bytes versus ' + octetsCanonique.length + ').');
+  }
+});
+</script>
+</body>
+</html>

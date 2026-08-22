@@ -85,6 +85,29 @@ Attention : **sels et témoins contiennent les données en clair** — ils se
 stockent et se protègent comme les données elles-mêmes, jamais dans un
 dépôt public. Seule la page de vérification est publique.
 
+### La remise du témoin à son propriétaire
+
+Le témoin n'est pas « extrait » par l'utilisateur : il est **fabriqué**
+par le système (`temoin emettre`, puis `temoin completer`), et c'est la
+plateforme qui le **remet** à son propriétaire. Concrètement :
+
+- après `completer`, chaque fichier de `ancrage/temoins/<lot>/`
+  correspond à un enregistrement, dans l'ordre du lot — la plateforme
+  fait le lien avec ses comptes utilisateurs ;
+- chaque utilisateur voit, dans **son espace personnel**, un bouton
+  « **Télécharger mon témoin** » par élément scellé (relevé, diplôme…) —
+  téléchargement authentifié, jamais un lien public ;
+- en cas de perte, la plateforme **redélivre à l'identique** : elle
+  conserve témoins et sels tant que les données existent ;
+- à côté du bouton, un lien « Vérifier ce témoin » mène à la page de
+  vérification publique de l'instance.
+
+Note internationale : les noms de champs du témoin (`canonique`, `sel`,
+`chemin`, `gauche`/`droite`…) sont des **identifiants techniques figés**
+par SPEC.md, pas de la prose — un outil dans n'importe quelle langue les
+lit tels quels. Ils ne se traduisent jamais ; seules les interfaces
+(pages, messages) existent en plusieurs langues.
+
 ## 4. Le trajet complet, en une ligne
 
 Plateforme : produit `extractions/<lot>.json` → sparkso-temoin (CLI) :

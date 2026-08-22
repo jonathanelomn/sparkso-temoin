@@ -25,6 +25,9 @@
   officiel (la preuve .ots est téléchargeable depuis cette page).
 
   Spécification : SPEC.md du dépôt sparkso-temoin (format du témoin v1).
+
+  VERSION ANGLAISE : verifieur/en.html — toute modification de l'un des
+  deux fichiers doit être répercutée dans l'autre.
 -->
 <style>
   /* Identité visuelle : sombre, sobre, moderne — fond quasi noir à
@@ -60,6 +63,12 @@
   }
   .marque .logo { color: var(--accent); flex: none; display: block; }
   .marque .demi { color: var(--sourdine); font-weight: 500; }
+  .marque .langue {
+    margin-left: auto; font-size: .8rem; font-weight: 600;
+    color: var(--sourdine); text-decoration: none;
+    border: 1px solid var(--cadre); border-radius: 999px; padding: .3rem .75rem;
+  }
+  .marque .langue:hover { color: var(--accent); border-color: var(--accent); }
   h1 {
     font-size: clamp(2.1rem, 6vw, 3rem); line-height: 1.12;
     font-weight: 450; letter-spacing: -.02em; margin: 0 0 .7rem;
@@ -210,6 +219,7 @@
         points="14,11.8 15.905,12.9 15.905,15.1 14,16.2 12.095,15.1 12.095,12.9"/>
     </svg>
     <span>Sparkso<span class="demi">-temoin</span></span>
+    <a class="langue" href="en.html" lang="en" hreflang="en">EN</a>
   </p>
 
   <header>
@@ -646,6 +656,32 @@
         chez vous, ne le publiez pas. Le remettre à quelqu'un, c'est lui
         montrer vos données — c'est justement à ça qu'il sert, quand
         <em>vous</em> le décidez.
+      </p>
+    </details>
+    <details>
+      <summary>Comment ai-je reçu ce fichier ? Où le retrouver ?</summary>
+      <p>
+        C'est l'établissement qui vous le remet, généralement par un
+        bouton « Télécharger mon témoin » dans votre espace personnel
+        (un fichier par élément scellé : relevé, diplôme…). Une fois
+        téléchargé, il est sur votre ordinateur, souvent dans le dossier
+        « Téléchargements » — cherchez un nom finissant par
+        <code>.temoin.json</code>. Il n'y a rien à « installer » : c'est
+        un simple fichier, à vous, pour toujours.
+      </p>
+    </details>
+    <details>
+      <summary>Le fichier contient des mots français — fonctionne-t-il à l'étranger ?</summary>
+      <p>
+        Oui, partout. Les mots à l'intérieur du fichier
+        (<code>temoin</code>, <code>racine</code>, <code>gauche</code>…)
+        ne sont pas de la langue : ce sont des <strong>codes techniques
+        figés</strong>, définis une fois pour toutes par la spécification
+        publique du format — comme les mots-clés anglais qu'on trouve
+        dans la plupart des formats informatiques sans jamais les
+        traduire. Un logiciel de n'importe quel pays les lit tels quels,
+        et cette page existe aussi <a href="en.html">en anglais</a> :
+        les deux vérifient exactement les mêmes fichiers.
       </p>
     </details>
     <details>
