@@ -26,6 +26,7 @@ avec la spec seule.
 
 ```
 SPEC.md          la spécification v1 — l'interface du système
+EXTRACTION.md    le lot d'extraction : comment une plateforme alimente le système
 lib/             le cœur : canonique(), Merkle, témoin — zéro dépendance
 cli/             ancrer / completer / verifier / temoin
 verifieur/       page statique auto-suffisante (un seul fichier HTML)

@@ -54,10 +54,11 @@
   }
   main { max-width: 46rem; margin: 0 auto; padding: 2rem 1.1rem 4.5rem; }
   .marque {
-    font-size: .92rem; font-weight: 650; letter-spacing: .01em;
+    display: flex; align-items: center; gap: .6rem;
+    font-size: 1.05rem; font-weight: 700; letter-spacing: .01em;
     margin: 0 0 2.6rem; color: var(--encre);
   }
-  .marque .etincelle { color: var(--accent); margin-right: .35rem; }
+  .marque .logo { color: var(--accent); flex: none; display: block; }
   .marque .demi { color: var(--sourdine); font-weight: 500; }
   h1 {
     font-size: clamp(2.1rem, 6vw, 3rem); line-height: 1.12;
@@ -176,7 +177,55 @@
 </head>
 <body>
 <main>
-  <p class="marque"><span class="etincelle">✦</span>sparkso<span class="demi">-temoin</span></p>
+  <p class="marque">
+    <!-- Le pavé de points Sparkso, décliné en vert. -->
+    <svg class="logo" width="30" height="30" viewBox="-12 -12 24 24" fill="currentColor" aria-hidden="true">
+      <circle r="1.8"/>
+      <g opacity=".92">
+        <circle cy="-3.6" r="1.5"/>
+        <g transform="rotate(60)"><circle cy="-3.6" r="1.5"/></g>
+        <g transform="rotate(120)"><circle cy="-3.6" r="1.5"/></g>
+        <g transform="rotate(180)"><circle cy="-3.6" r="1.5"/></g>
+        <g transform="rotate(240)"><circle cy="-3.6" r="1.5"/></g>
+        <g transform="rotate(300)"><circle cy="-3.6" r="1.5"/></g>
+      </g>
+      <g opacity=".72">
+        <circle cy="-7.1" r="1.2"/>
+        <g transform="rotate(30)"><circle cy="-7.1" r="1.2"/></g>
+        <g transform="rotate(60)"><circle cy="-7.1" r="1.2"/></g>
+        <g transform="rotate(90)"><circle cy="-7.1" r="1.2"/></g>
+        <g transform="rotate(120)"><circle cy="-7.1" r="1.2"/></g>
+        <g transform="rotate(150)"><circle cy="-7.1" r="1.2"/></g>
+        <g transform="rotate(180)"><circle cy="-7.1" r="1.2"/></g>
+        <g transform="rotate(210)"><circle cy="-7.1" r="1.2"/></g>
+        <g transform="rotate(240)"><circle cy="-7.1" r="1.2"/></g>
+        <g transform="rotate(270)"><circle cy="-7.1" r="1.2"/></g>
+        <g transform="rotate(300)"><circle cy="-7.1" r="1.2"/></g>
+        <g transform="rotate(330)"><circle cy="-7.1" r="1.2"/></g>
+      </g>
+      <g opacity=".5">
+        <circle cy="-10.5" r=".9"/>
+        <g transform="rotate(20)"><circle cy="-10.5" r=".9"/></g>
+        <g transform="rotate(40)"><circle cy="-10.5" r=".9"/></g>
+        <g transform="rotate(60)"><circle cy="-10.5" r=".9"/></g>
+        <g transform="rotate(80)"><circle cy="-10.5" r=".9"/></g>
+        <g transform="rotate(100)"><circle cy="-10.5" r=".9"/></g>
+        <g transform="rotate(120)"><circle cy="-10.5" r=".9"/></g>
+        <g transform="rotate(140)"><circle cy="-10.5" r=".9"/></g>
+        <g transform="rotate(160)"><circle cy="-10.5" r=".9"/></g>
+        <g transform="rotate(180)"><circle cy="-10.5" r=".9"/></g>
+        <g transform="rotate(200)"><circle cy="-10.5" r=".9"/></g>
+        <g transform="rotate(220)"><circle cy="-10.5" r=".9"/></g>
+        <g transform="rotate(240)"><circle cy="-10.5" r=".9"/></g>
+        <g transform="rotate(260)"><circle cy="-10.5" r=".9"/></g>
+        <g transform="rotate(280)"><circle cy="-10.5" r=".9"/></g>
+        <g transform="rotate(300)"><circle cy="-10.5" r=".9"/></g>
+        <g transform="rotate(320)"><circle cy="-10.5" r=".9"/></g>
+        <g transform="rotate(340)"><circle cy="-10.5" r=".9"/></g>
+      </g>
+    </svg>
+    <span>Sparkso<span class="demi">-temoin</span></span>
+  </p>
 
   <header>
     <h1><span class="grise">Des états certifiés,</span><br>vérifiables par quiconque</h1>
@@ -319,6 +368,42 @@
       plateforme émettrice a disparu.
     </p>
 
+    <h2>Un témoin JSON, concrètement</h2>
+    <p>
+      « JSON » désigne simplement un format de fichier <strong>texte</strong>,
+      lisible par les humains comme par les machines : des paires
+      « nom : valeur » entre accolades. Voici un témoin réel — celui de
+      l'exemple du volet Vérifier — puis chaque champ en langage courant :
+    </p>
+    <pre>{
+  "format": 1,
+  "hachage": "sha-256",
+  "canonique": "{\"n\":3}",
+  "sel": "3333333333333333333333333333333333333333333333333333333333333333",
+  "chemin": [
+    { "cote": "gauche", "empreinte": "619d2265…4d659f35" }
+  ],
+  "racine": "c6c5f461…106ebe8e",
+  "attestations": []
+}</pre>
+    <ul>
+      <li><code>format</code> — la version de la règle du jeu, pour qu'un
+        vérifieur de 2036 sache encore lire ce reçu.</li>
+      <li><code>hachage</code> — la fonction d'empreinte utilisée (SHA-256).</li>
+      <li><code>canonique</code> — <strong>les données scellées elles-mêmes</strong>,
+        dans leur écriture unique et normalisée.</li>
+      <li><code>sel</code> — le nombre secret propre à cet enregistrement,
+        écrit en hexadécimal (64 caractères pour 32 octets).</li>
+      <li><code>chemin</code> — la liste des « matchs » du tournoi, de
+        l'empreinte de ce document jusqu'au résumé, chacun disant si le
+        partenaire était à gauche ou à droite.</li>
+      <li><code>racine</code> — l'empreinte-résumé unique, celle qui est
+        déposée dans Bitcoin.</li>
+      <li><code>attestations</code> — les preuves du dépôt. Vide comme ici :
+        le témoin est en attente d'ancrage et ne prouve encore aucune
+        antériorité.</li>
+    </ul>
+
     <h2>Ce que la preuve garantit — exactement</h2>
     <p>
       Un témoin valide prouve : <em>« ces octets existaient au plus tard
@@ -438,6 +523,17 @@
         cette page est le côté « contrôle ». Sa conformité est prouvée par
         des tests automatiques qui rejouent tous les exemples chiffrés de la
         spécification.
+      </p>
+    </div>
+    <div class="carte">
+      <h3>Le format d'extraction (EXTRACTION.md) <span class="badge fait">Fait — 22 août 2026</span></h3>
+      <p>
+        Le pont entre chaque plateforme (Sparkso Universités pour l'IUGM,
+        ou toute autre) et ce système : un fichier JSON standard, le
+        « lot d'extraction », que la plateforme produit en un clic depuis
+        un endroit explicite de son administration (une section
+        « Ancrage »), et que l'outil scelle sans rien connaître du métier.
+        En retour, la plateforme reçoit les sels, les témoins et la preuve.
       </p>
     </div>
     <div class="carte">
