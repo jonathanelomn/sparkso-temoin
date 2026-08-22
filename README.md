@@ -8,9 +8,9 @@ ancrage d'empreintes salées — jamais des données elles-mêmes.
 - **Aucune donnée personnelle sur la chaîne, jamais.** On n'ancre que des
   empreintes (hachages salés) ; les données restent chez leur propriétaire.
 - **Vérifiable par quiconque, sans confiance envers la plateforme** : la
-  formule, le témoin et un explorateur public suffisent. Spécification et
-  vérifieur ont vocation à être publiés : c'est l'argument « vérifiable par
-  quiconque ».
+  formule, le témoin et un explorateur public suffisent. C'est pourquoi ce
+  dépôt — spécification et vérifieur compris — est public : l'argument
+  « vérifiable par quiconque » se constate.
 - **Socle : OpenTimestamps sur Bitcoin** (gratuit, sans portefeuille,
   standard ouvert). Le format accueille dès la v1 une extension vers une
   chaîne EVM, sans changement de format.
