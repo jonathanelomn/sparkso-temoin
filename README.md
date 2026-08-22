@@ -25,12 +25,14 @@ avec la spec seule.
 ## Structure
 
 ```
-SPEC.md          la spécification v1 — l'interface du système
-EXTRACTION.md    le lot d'extraction : comment une plateforme alimente le système
-lib/             le cœur : canonique(), Merkle, témoin — zéro dépendance
-cli/             ancrer / completer / verifier / temoin
-verifieur/       page statique auto-suffisante (un seul fichier HTML)
-exemples/        fichiers d'essai et leurs témoins
+SPEC.md              la spécification v1 — l'interface du système
+EXTRACTION.md        le lot d'extraction : comment une plateforme alimente le système
+PROPOSITION-EVM.md   proposition (à discuter) : ancrage secondaire sur chaîne EVM
+lib/                 le cœur : canonique(), Merkle, témoin — zéro dépendance
+cli/                 ancrer / completer / verifier / temoin
+verifieur/           page statique auto-suffisante (un fichier HTML par langue,
+                     testée sur téléphone — voir verifieur/MOBILE.md)
+exemples/            fichiers d'essai et leurs témoins
 ```
 
 ## Frontière du projet

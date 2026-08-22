@@ -18,14 +18,17 @@ la modifier** (un témoin de 2026 doit se vérifier en 2036) ;
   seul `cli/ots.js` touche au réseau, via la lib npm officielle
   `opentimestamps`.
 - `verifieur/index.html` (+ `en.html`) : page statique auto-suffisante,
-  4 volets, calcul en Web Crypto, zéro requête réseau.
+  4 volets, calcul en Web Crypto, zéro requête réseau ; auditée et
+  ajustée pour smartphone le 22 août 2026 (`verifieur/MOBILE.md`).
 - `exemples/` : **cas canonique réel** — lot `demonstration-notes-2026-S1`,
   racine `b133a459…867b` ancrée au **bloc Bitcoin 963516**, vérifiée par
   les outils officiels OpenTimestamps (voir exemples/README.md).
 
 Pistes suivantes probables : section « Ancrage » côté sparkso-universites
 (le contrat est dans EXTRACTION.md §3) ; extension EVM (SPEC §11, type
-d'attestation réservé — sans changement de format).
+d'attestation réservé — sans changement de format) : le brouillon du
+complément est écrit (`PROPOSITION-EVM.md`), en attente des décisions de
+sa section 8 — ne rien implémenter avant validation.
 
 ## Conventions (obligatoires)
 
