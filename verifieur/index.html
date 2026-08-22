@@ -3,13 +3,18 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Vérifieur de témoin — états certifiés par ancrage public</title>
+<title>Témoins — comprendre, suivre et vérifier</title>
 <!--
   Page auto-suffisante : aucun script externe, aucune police externe,
   aucune requête réseau. Tout le calcul se fait dans le navigateur via
   l'API Web Crypto — constatable dans l'onglet réseau des outils de
   développement. Cette page se copie telle quelle dans n'importe quel
   export statique.
+
+  Trois volets :
+   - Vérifier : déposer un témoin, refaire tout le calcul localement ;
+   - Comprendre : les notions du système en langage courant ;
+   - Le parcours : la vie d'un témoin et l'état du projet.
 
   Portée v1 (assumée) : la page recalcule l'empreinte de la feuille et le
   chemin de Merkle jusqu'à la racine R, puis affiche « conforme à son
@@ -42,17 +47,37 @@
   * { box-sizing: border-box; }
   body {
     margin: 0; background: var(--fond); color: var(--encre);
-    font: 16px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    font: 16px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   }
-  main { max-width: 46rem; margin: 0 auto; padding: 2rem 1rem 4rem; }
+  main { max-width: 48rem; margin: 0 auto; padding: 2rem 1rem 4rem; }
   h1 { font-size: 1.5rem; margin: 0 0 .25rem; }
-  .sous-titre { color: var(--sourdine); margin: 0 0 1.5rem; }
+  h2 { font-size: 1.2rem; margin: 1.8rem 0 .6rem; }
+  h3 { font-size: 1.02rem; margin: 1.2rem 0 .35rem; }
+  .sous-titre { color: var(--sourdine); margin: 0 0 1.25rem; }
   .note { color: var(--sourdine); font-size: .875rem; }
   code, .mono {
     font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
     font-size: .8125rem; background: var(--mono-fond);
     border-radius: 4px; padding: .05rem .3rem; overflow-wrap: anywhere;
   }
+  nav.onglets {
+    display: flex; gap: .4rem; flex-wrap: wrap;
+    border-bottom: 1px solid var(--cadre); margin: 1.2rem 0 1.6rem;
+  }
+  nav.onglets button {
+    font: inherit; font-weight: 600; color: var(--sourdine);
+    background: none; border: none; border-bottom: 3px solid transparent;
+    padding: .5rem .8rem; cursor: pointer; border-radius: 0;
+  }
+  nav.onglets button[aria-selected="true"] {
+    color: var(--accent); border-bottom-color: var(--accent);
+  }
+  .carte {
+    border: 1px solid var(--cadre); border-radius: 10px;
+    padding: .9rem 1.1rem; margin: .8rem 0; background: var(--panneau);
+  }
+  .carte h3 { margin-top: 0; }
+  .carte p { margin: .4rem 0; }
   .depot {
     border: 2px dashed var(--cadre); border-radius: 10px;
     padding: 1.5rem; text-align: center; cursor: pointer;
@@ -83,7 +108,8 @@
   .verdict.echec { background: var(--echec-fond); border: 1px solid var(--echec); }
   .verdict.echec h2 { color: var(--echec); }
   ol.etapes { padding-left: 1.4rem; margin: 1rem 0; }
-  ol.etapes li { margin: .45rem 0; }
+  ol.etapes li { margin: .65rem 0; }
+  ol.etapes .aide { display: block; color: var(--sourdine); font-size: .84rem; margin-top: .15rem; }
   .puce { font-weight: 600; }
   .puce.ok { color: var(--ok); }
   .puce.echec { color: var(--echec); }
@@ -96,51 +122,317 @@
   }
   a { color: var(--accent); }
   .liens-bloc { display: flex; gap: .8rem; flex-wrap: wrap; margin-top: .4rem; }
+  ol.parcours { padding-left: 0; list-style: none; counter-reset: temps; }
+  ol.parcours > li {
+    counter-increment: temps; position: relative;
+    padding: 0 0 1rem 3rem; border-left: 2px solid var(--cadre); margin-left: 1.1rem;
+  }
+  ol.parcours > li::before {
+    content: counter(temps); position: absolute; left: -1.15rem; top: -.15rem;
+    width: 2.1rem; height: 2.1rem; border-radius: 50%;
+    background: var(--accent); color: var(--fond); font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+  }
+  ol.parcours > li:last-child { border-left-color: transparent; }
+  ol.parcours strong.titre { display: block; margin-bottom: .15rem; }
+  .badge {
+    display: inline-block; font-size: .75rem; font-weight: 700;
+    border-radius: 99px; padding: .1rem .6rem; vertical-align: middle;
+  }
+  .badge.fait { background: var(--ok-fond); color: var(--ok); border: 1px solid var(--ok); }
+  .badge.avenir { background: var(--attente-fond); color: var(--attente); border: 1px solid var(--attente); }
   hr { border: none; border-top: 1px solid var(--cadre); margin: 2rem 0; }
   footer { margin-top: 2.5rem; }
 </style>
 </head>
 <body>
 <main>
-  <h1>Vérifieur de témoin</h1>
-  <p class="sous-titre">États certifiés par ancrage public — format de témoin v1.</p>
-
-  <p class="note">
-    Tout le calcul se fait dans votre navigateur (API Web Crypto).
-    <strong>Rien n'est envoyé nulle part</strong> : vous pouvez le constater
-    dans l'onglet réseau de vos outils de développement, ou utiliser cette
-    page hors connexion.
+  <h1>Témoins d'ancrage public</h1>
+  <p class="sous-titre">
+    Comprendre, suivre et vérifier des états certifiés par ancrage public —
+    sans avoir à croire la plateforme qui les a émis.
   </p>
 
-  <div id="zone-depot" class="depot" role="button" tabindex="0"
-       aria-label="Déposer ou choisir un fichier témoin JSON">
-    <p><strong>Déposez ici un témoin JSON</strong></p>
-    <p class="note">ou cliquez pour choisir un fichier</p>
-    <input id="fichier-temoin" type="file" accept=".json,application/json" hidden>
-  </div>
+  <nav class="onglets" role="tablist">
+    <button role="tab" aria-selected="true" data-volet="volet-verifier">Vérifier un témoin</button>
+    <button role="tab" aria-selected="false" data-volet="volet-comprendre">Comprendre le système</button>
+    <button role="tab" aria-selected="false" data-volet="volet-parcours">Le parcours d'un témoin</button>
+  </nav>
 
-  <textarea id="texte-temoin" spellcheck="false"
-    placeholder='…ou collez le témoin ici : { "format": 1, "hachage": "sha-256", … }'></textarea>
-
-  <div class="actions">
-    <button id="btn-verifier" class="principal">Vérifier</button>
-    <button id="btn-exemple" type="button">Charger l'exemple (vecteur C de la spec)</button>
-    <button id="btn-effacer" type="button">Effacer</button>
-  </div>
-
-  <section id="resultat" hidden></section>
-
-  <section id="section-donnees" hidden>
-    <hr>
-    <h2 style="font-size:1.1rem">Comparer aux données originales (facultatif)</h2>
+  <!-- ================== VOLET : VÉRIFIER ================== -->
+  <section id="volet-verifier">
     <p class="note">
-      Le témoin transporte sa propre sérialisation canonique. Si vous détenez
-      le fichier scellé d'origine, déposez-le ici : la page exige alors
-      l'égalité stricte des octets avec le champ <code>canonique</code> du
-      témoin — cela lie le témoin aux données que vous détenez réellement.
+      Tout le calcul se fait dans votre navigateur (API Web Crypto).
+      <strong>Rien n'est envoyé nulle part</strong> : vous pouvez le constater
+      dans l'onglet réseau de vos outils de développement, ou utiliser cette
+      page hors connexion. Un témoin est le « reçu » remis lors d'un
+      scellement — nouveau ici ? Commencez par le volet
+      <a href="#" data-aller="volet-comprendre">Comprendre le système</a>.
     </p>
-    <input id="fichier-donnees" type="file">
-    <p id="resultat-donnees"></p>
+
+    <div id="zone-depot" class="depot" role="button" tabindex="0"
+         aria-label="Déposer ou choisir un fichier témoin JSON">
+      <p><strong>Déposez ici un témoin JSON</strong></p>
+      <p class="note">ou cliquez pour choisir un fichier</p>
+      <input id="fichier-temoin" type="file" accept=".json,application/json" hidden>
+    </div>
+
+    <textarea id="texte-temoin" spellcheck="false"
+      placeholder='…ou collez le témoin ici : { "format": 1, "hachage": "sha-256", … }'></textarea>
+
+    <div class="actions">
+      <button id="btn-verifier" class="principal">Vérifier</button>
+      <button id="btn-exemple" type="button">Essayer avec l'exemple de la spécification</button>
+      <button id="btn-effacer" type="button">Effacer</button>
+    </div>
+
+    <section id="resultat" hidden></section>
+
+    <section id="section-donnees" hidden>
+      <hr>
+      <h2>Comparer aux données originales (facultatif)</h2>
+      <p class="note">
+        Le témoin transporte sa propre copie des données (le champ
+        <code>canonique</code>). Si vous détenez le fichier scellé d'origine,
+        déposez-le ici : la page exige alors l'égalité stricte, octet pour
+        octet — cela relie le témoin aux données que vous détenez réellement,
+        pas seulement à sa copie interne.
+      </p>
+      <input id="fichier-donnees" type="file">
+      <p id="resultat-donnees"></p>
+    </section>
+  </section>
+
+  <!-- ================== VOLET : COMPRENDRE ================== -->
+  <section id="volet-comprendre" hidden>
+    <h2>Le but, en une phrase</h2>
+    <p>
+      Permettre de prouver plus tard, à n'importe qui, que <strong>tel
+      document existait déjà à telle époque et n'a pas été modifié
+      depuis</strong> — sans jamais publier le document lui-même.
+    </p>
+    <p>
+      C'est l'équivalent numérique d'un cachet de cire daté, sauf que le
+      « registre » qui date le cachet est public et infalsifiable (la
+      blockchain Bitcoin), et que n'importe qui peut refaire la vérification
+      sans croire la plateforme sur parole.
+    </p>
+
+    <h2>Les quatre idées de base</h2>
+
+    <div class="carte">
+      <h3>1. L'empreinte</h3>
+      <p>
+        On ne publie jamais un document. On calcule son <strong>empreinte</strong> :
+        une sorte d'empreinte digitale de 64 caractères, obtenue par un calcul
+        mathématique standard (appelé SHA-256). Deux propriétés comptent : le
+        même document donne toujours la même empreinte, et il est impossible de
+        retrouver le document à partir de l'empreinte. C'est cette empreinte-là,
+        et rien d'autre, qui sort de chez le propriétaire des données.
+      </p>
+      <p class="note">
+        Au préalable, les données sont mises dans une écriture unique et
+        normalisée (dite « canonique ») : mêmes données ⇒ même texte, à
+        l'octet près ⇒ même empreinte, quel que soit le logiciel utilisé.
+      </p>
+    </div>
+
+    <div class="carte">
+      <h3>2. Le sel</h3>
+      <p>
+        Problème : si un document est facile à deviner (par exemple
+        « note : 12/20 »), quelqu'un pourrait tester toutes les possibilités
+        et comparer les empreintes. La parade : avant le calcul, on mélange au
+        document un <strong>sel</strong> — un grand nombre aléatoire secret,
+        différent pour chaque document, gardé par le propriétaire des données.
+        Sans le sel, impossible de confirmer quoi que ce soit.
+      </p>
+    </div>
+
+    <div class="carte">
+      <h3>3. L'arbre (dit « de Merkle »)</h3>
+      <p>
+        Publier une empreinte par document coûterait cher. Alors on combine
+        les empreintes deux par deux, puis encore deux par deux, jusqu'à
+        obtenir <strong>une seule empreinte-résumé</strong> : la
+        <strong>racine</strong>. Comme un tournoi sportif : beaucoup de
+        participants, une seule finale. On ne publie que la racine — et chaque
+        document garde la liste de ses « matchs » (son <strong>chemin</strong>)
+        pour prouver qu'il mène bien à cette racine.
+      </p>
+    </div>
+
+    <div class="carte">
+      <h3>4. L'ancrage</h3>
+      <p>
+        On dépose la racine dans la blockchain Bitcoin, via un service
+        gratuit et standard appelé <a href="https://opentimestamps.org/"
+        rel="noopener">OpenTimestamps</a>. La blockchain est un registre
+        public où chaque page (un <strong>bloc</strong>) est numérotée et
+        impossible à réécrire. Une fois la racine dans le bloc numéro B, on
+        peut affirmer : « tout ce qui a mené à cette racine existait
+        <strong>au plus tard</strong> quand le bloc B a été écrit ».
+      </p>
+    </div>
+
+    <h2>Le témoin : le reçu final</h2>
+    <p>
+      Le <strong>témoin</strong> est le reçu remis au propriétaire du
+      document : un petit fichier JSON qui contient tout le nécessaire pour
+      refaire la vérification — les données (dans leur écriture canonique),
+      le sel, le chemin dans l'arbre, la racine, et la preuve du dépôt dans
+      Bitcoin (l'<strong>attestation</strong>). Celui qui détient un témoin
+      peut prouver l'antériorité de son document à n'importe qui, même si la
+      plateforme émettrice a disparu.
+    </p>
+
+    <h2>Ce que la preuve garantit — exactement</h2>
+    <p>
+      Un témoin valide prouve : <em>« ces octets existaient au plus tard
+      lorsque le bloc B a été miné »</em>. Rien de plus. On ne dit jamais
+      « le 15 janvier à 8h30 » : l'heure affichée d'un bloc Bitcoin peut
+      dériver d'environ deux heures — on ne promet que ce qu'on peut tenir.
+      Et un témoin ne prouve ni l'exactitude ni la sincérité du contenu :
+      il prouve l'antériorité et l'intégrité d'octets précis. C'est pourquoi
+      on parle d'« états certifiés par ancrage public », jamais de documents
+      « officiels » : la valeur juridique dépend du droit applicable ; la
+      preuve technique, elle, est forte.
+    </p>
+
+    <h2>Et le droit à l'effacement ? (RGPD)</h2>
+    <p>
+      La blockchain ne porte <strong>aucune donnée personnelle</strong>,
+      jamais — uniquement des empreintes salées, muettes par construction.
+      Le jour où des données doivent être effacées, on détruit les données
+      et leur sel : l'empreinte publiée devient définitivement inerte, elle
+      ne permet plus ni de retrouver ni même de confirmer quoi que ce soit.
+      Ce mécanisme s'appelle le <em>crypto-shredding</em> : ce qui est
+      effaçable est hors chaîne, et ce qui est sur la chaîne n'a jamais rien
+      porté d'effaçable.
+    </p>
+
+    <h2>Pourquoi croire cette page ?</h2>
+    <p>
+      Justement : vous n'avez pas à la croire. Elle refait tous les calculs
+      localement, dans votre navigateur, sans rien envoyer (vérifiable dans
+      l'onglet réseau). La preuve d'ancrage se constate sur des sites
+      publics indépendants, et le fichier de preuve <code>.ots</code> peut
+      être contrôlé avec le client OpenTimestamps officiel — l'outil d'un
+      tiers. Les règles complètes du calcul sont publiées dans la
+      spécification du projet (<code>SPEC.md</code>), avec des exemples
+      chiffrés permettant à quiconque de réécrire sa propre vérification.
+    </p>
+  </section>
+
+  <!-- ================== VOLET : PARCOURS ================== -->
+  <section id="volet-parcours" hidden>
+    <h2>La vie d'un témoin, en six temps</h2>
+    <p class="note">
+      Du document au reçu vérifiable : ce qui se passe, dans l'ordre, à
+      chaque scellement. Les temps 1 à 4 sont un pur calcul, hors ligne ;
+      seul le temps 5 touche à Internet.
+    </p>
+    <ol class="parcours">
+      <li>
+        <strong class="titre">Mise en forme canonique</strong>
+        Les données à sceller (une note, un diplôme, n'importe quel
+        enregistrement) sont écrites dans leur forme unique et normalisée :
+        mêmes données, même texte, à l'octet près.
+      </li>
+      <li>
+        <strong class="titre">Sel</strong>
+        Un grand nombre aléatoire secret est tiré pour cet enregistrement
+        précis, et confié au propriétaire des données. Il restera hors
+        chaîne, stocké et détruit avec les données.
+      </li>
+      <li>
+        <strong class="titre">Empreinte</strong>
+        Le sel et les données canoniques sont mélangés puis passés dans
+        SHA-256 : voici l'empreinte digitale de l'enregistrement (sa
+        « feuille »).
+      </li>
+      <li>
+        <strong class="titre">Arbre et racine</strong>
+        Toutes les feuilles du lot sont combinées deux par deux, comme un
+        tournoi, jusqu'à l'empreinte-résumé unique : la racine. Chaque
+        enregistrement garde son chemin vers elle.
+      </li>
+      <li>
+        <strong class="titre">Ancrage dans Bitcoin</strong>
+        La racine — elle seule — est déposée via OpenTimestamps. La preuve
+        est d'abord <em>incomplète</em> (en file d'attente) ; quelques
+        heures plus tard, après confirmation dans un bloc numéroté, elle est
+        <em>complétée</em>. C'est le seul moment où le système touche au
+        réseau.
+      </li>
+      <li>
+        <strong class="titre">Remise du témoin</strong>
+        Chaque propriétaire reçoit son reçu : données canoniques + sel +
+        chemin + racine + attestation. Il peut dès lors tout faire vérifier,
+        ici même ou avec des outils indépendants — pour toujours.
+      </li>
+    </ol>
+
+    <h2>Les briques du projet, et où il en est</h2>
+    <p class="note">
+      Ce volet sert de tableau de suivi : à l'équipe Sparkso pour suivre la
+      construction, et à tout client pour savoir ce qui existe et ce qui
+      arrive.
+    </p>
+
+    <div class="carte">
+      <h3>La spécification (SPEC.md) <span class="badge fait">Fait — 21 août 2026</span></h3>
+      <p>
+        La règle du jeu, écrite noir sur blanc avant toute ligne de code :
+        format du témoin, recette exacte des calculs, garantie précise,
+        section effacement, et exemples chiffrés en annexe. C'est elle qui
+        assure qu'un reçu émis en 2026 restera vérifiable en 2036, même sans
+        notre code.
+      </p>
+    </div>
+    <div class="carte">
+      <h3>La page de vérification <span class="badge fait">Fait — 21 août 2026</span></h3>
+      <p>
+        Cette page même : un seul fichier, copiable sur le site de chaque
+        client, qui refait tous les calculs dans le navigateur. Volet
+        « Vérifier un témoin », ci-contre.
+      </p>
+    </div>
+    <div class="carte">
+      <h3>La bibliothèque (lib/) <span class="badge fait">Fait — 22 août 2026</span></h3>
+      <p>
+        Le code qui fabrique les témoins — le côté « production », quand
+        cette page est le côté « contrôle ». Sa conformité est prouvée par
+        des tests automatiques qui rejouent tous les exemples chiffrés de la
+        spécification.
+      </p>
+    </div>
+    <div class="carte">
+      <h3>L'outil en ligne de commande (cli/) <span class="badge avenir">À venir</span></h3>
+      <p>
+        Quatre commandes pour opérer le système : émettre des témoins,
+        les vérifier, ancrer une racine dans Bitcoin, et compléter la preuve
+        quelques heures plus tard, une fois le dépôt confirmé.
+      </p>
+    </div>
+    <div class="carte">
+      <h3>Le jalon de preuve <span class="badge avenir">À venir</span></h3>
+      <p>
+        Le test grandeur nature : ancrer un vrai fichier d'essai, attendre
+        la confirmation Bitcoin, puis faire vérifier notre reçu par l'outil
+        officiel d'OpenTimestamps — l'outil de quelqu'un d'autre. S'il dit
+        « valide », la compatibilité avec le standard est prouvée, pas
+        seulement affirmée. Ce cas réel deviendra l'exemple canonique de la
+        documentation.
+      </p>
+    </div>
+
+    <p class="note">
+      Frontière volontaire : ce système est générique — des octets en
+      entrée, un témoin en sortie. Le choix de <em>quoi</em> sceller, à
+      quel moment, et la conservation des données et des sels appartiennent
+      à chaque projet qui l'utilise (Sparkso Universités en premier).
+    </p>
   </section>
 
   <footer class="note">
@@ -153,8 +445,8 @@
     <p>
       Portée de cette page (v1) : elle recalcule l'empreinte et le chemin de
       Merkle jusqu'à la racine R. Le contrôle complet de la preuve
-      OpenTimestamps (<code>.ots</code>, téléchargeable ci-dessus une fois le
-      témoin chargé) se fait avec le
+      OpenTimestamps (<code>.ots</code>, téléchargeable une fois un témoin
+      ancré chargé) se fait avec le
       <a href="https://opentimestamps.org/" rel="noopener">client OpenTimestamps officiel</a> —
       l'outil d'un tiers, précisément pour ne pas avoir à nous croire.
     </p>
@@ -163,6 +455,27 @@
 
 <script>
 'use strict';
+
+/* ---------- Navigation entre volets ---------- */
+
+const onglets = document.querySelectorAll('nav.onglets button');
+function afficherVolet(identifiant) {
+  for (const onglet of onglets) {
+    const actif = onglet.dataset.volet === identifiant;
+    onglet.setAttribute('aria-selected', String(actif));
+    document.getElementById(onglet.dataset.volet).hidden = !actif;
+  }
+}
+for (const onglet of onglets) {
+  onglet.addEventListener('click', () => afficherVolet(onglet.dataset.volet));
+}
+for (const lien of document.querySelectorAll('[data-aller]')) {
+  lien.addEventListener('click', evenement => {
+    evenement.preventDefault();
+    afficherVolet(lien.dataset.aller);
+    window.scrollTo({ top: 0 });
+  });
+}
 
 /* ---------- Outils octets ---------- */
 
@@ -230,27 +543,35 @@ async function repli(feuille, chemin) {
   return courant;
 }
 
-// Vérifie un témoin ; retourne { etapes, calcul, ancrage }.
+// Vérifie un témoin ; retourne { etapes, calcul, ancrage }. Chaque étape
+// porte une phrase d'aide en langage courant, affichée sous le résultat.
 async function verifierTemoin(temoin) {
   const etapes = [];
   const calcul = {};
 
   // Étape 1 — format.
+  const AIDE_FORMAT = 'On lit d’abord l’étiquette du reçu : version du format et ' +
+    'fonction d’empreinte utilisée. Sans elle, on ne saurait pas comment vérifier.';
   if (temoin.format !== 1) {
     etapes.push({ ok: false, texte: 'Format : "format" doit valoir 1 (reçu : ' +
-      JSON.stringify(temoin.format) + ').' });
+      JSON.stringify(temoin.format) + ').', aide: AIDE_FORMAT });
     return { etapes, calcul, ancrage: null };
   }
   if (temoin.hachage !== 'sha-256') {
     etapes.push({ ok: false, texte: 'Format : "hachage" doit valoir "sha-256" (reçu : ' +
-      JSON.stringify(temoin.hachage) + ').' });
+      JSON.stringify(temoin.hachage) + ').', aide: AIDE_FORMAT });
     return { etapes, calcul, ancrage: null };
   }
-  etapes.push({ ok: true, texte: 'Format reconnu : témoin v1, hachage sha-256.' });
+  etapes.push({ ok: true, texte: 'Format reconnu : témoin v1, hachage sha-256.',
+    aide: AIDE_FORMAT });
 
   // Étape 2 — empreinte de la feuille : h = H(0x00 ‖ sel ‖ canonique).
+  const AIDE_FEUILLE = 'La page recalcule l’empreinte digitale des données : le sel ' +
+    'secret est mélangé aux données, le tout passé dans SHA-256. Un seul caractère ' +
+    'changé, et cette empreinte serait entièrement différente.';
   if (typeof temoin.canonique !== 'string') {
-    etapes.push({ ok: false, texte: 'Feuille : "canonique" doit être une chaîne.' });
+    etapes.push({ ok: false, texte: 'Feuille : "canonique" doit être une chaîne.',
+      aide: AIDE_FEUILLE });
     return { etapes, calcul, ancrage: null };
   }
   let feuille;
@@ -259,47 +580,53 @@ async function verifierTemoin(temoin) {
     const canonique = new TextEncoder().encode(temoin.canonique);
     feuille = await sha256(concat(PREFIXE_FEUILLE, sel, canonique));
   } catch (erreur) {
-    etapes.push({ ok: false, texte: 'Feuille : ' + erreur.message });
+    etapes.push({ ok: false, texte: 'Feuille : ' + erreur.message, aide: AIDE_FEUILLE });
     return { etapes, calcul, ancrage: null };
   }
   calcul.feuille = octetsVersHex(feuille);
   etapes.push({ ok: true,
-    texte: 'Empreinte de la feuille recalculée : H(0x00 ‖ sel ‖ canonique) = ',
-    code: calcul.feuille });
+    texte: 'Empreinte des données recalculée : ',
+    code: calcul.feuille, aide: AIDE_FEUILLE });
 
   // Étape 3 — repli du chemin.
+  const AIDE_CHEMIN = 'Elle rejoue ensuite le « tournoi » : l’empreinte est combinée ' +
+    'avec ses voisines, étage par étage, jusqu’à l’empreinte-résumé unique (la racine).';
   if (!Array.isArray(temoin.chemin)) {
-    etapes.push({ ok: false, texte: 'Chemin : "chemin" doit être un tableau.' });
+    etapes.push({ ok: false, texte: 'Chemin : "chemin" doit être un tableau.',
+      aide: AIDE_CHEMIN });
     return { etapes, calcul, ancrage: null };
   }
   let racineRecalculee;
   try {
     racineRecalculee = await repli(feuille, temoin.chemin);
   } catch (erreur) {
-    etapes.push({ ok: false, texte: 'Chemin : ' + erreur.message });
+    etapes.push({ ok: false, texte: 'Chemin : ' + erreur.message, aide: AIDE_CHEMIN });
     return { etapes, calcul, ancrage: null };
   }
   calcul.racineRecalculee = octetsVersHex(racineRecalculee);
   etapes.push({ ok: true,
-    texte: 'Chemin de Merkle replié (' + temoin.chemin.length +
-      (temoin.chemin.length > 1 ? ' maillons' : ' maillon') + ') : R′ = ',
-    code: calcul.racineRecalculee });
+    texte: 'Chemin rejoué (' + temoin.chemin.length +
+      (temoin.chemin.length > 1 ? ' étages' : ' étage') + ') ; racine obtenue : ',
+    code: calcul.racineRecalculee, aide: AIDE_CHEMIN });
 
   // Étape 4 — comparaison à la racine annoncée (sur les octets décodés).
+  const AIDE_RACINE = 'La racine recalculée doit être identique à celle inscrite dans ' +
+    'le témoin. Identiques = ni les données, ni le sel, ni le chemin n’ont été altérés.';
   let racineAnnoncee;
   try {
     racineAnnoncee = hexVersOctets(temoin.racine, 32, 'racine');
   } catch (erreur) {
-    etapes.push({ ok: false, texte: 'Racine : ' + erreur.message });
+    etapes.push({ ok: false, texte: 'Racine : ' + erreur.message, aide: AIDE_RACINE });
     return { etapes, calcul, ancrage: null };
   }
   if (!memesOctets(racineRecalculee, racineAnnoncee)) {
     etapes.push({ ok: false,
       texte: 'La racine recalculée NE correspond PAS à la racine du témoin : ',
-      code: temoin.racine });
+      code: temoin.racine, aide: AIDE_RACINE });
     return { etapes, calcul, ancrage: null };
   }
-  etapes.push({ ok: true, texte: 'La racine recalculée est identique à la racine du témoin.' });
+  etapes.push({ ok: true, texte: 'La racine recalculée est identique à la racine du témoin.',
+    aide: AIDE_RACINE });
 
   // Étape 5 — attestations. Les types inconnus sont ignorés sans erreur.
   const attestations = Array.isArray(temoin.attestations) ? temoin.attestations : [];
@@ -365,7 +692,8 @@ async function lancerVerification(texte) {
   try {
     temoin = JSON.parse(texte);
   } catch (_erreur) {
-    afficherErreur('Ce contenu n’est pas du JSON valide.');
+    afficherErreur('Ce contenu n’est pas du JSON valide. Un témoin est un petit ' +
+      'fichier texte au format JSON, remis lors du scellement.');
     return;
   }
   if (typeof temoin !== 'object' || temoin === null || Array.isArray(temoin)) {
@@ -383,7 +711,8 @@ async function lancerVerification(texte) {
   if (!conforme) {
     fragments.push(element('div', { class: 'verdict echec' },
       element('h2', { texte: 'Non conforme à son témoin' }),
-      element('p', { texte: 'Le recalcul ne confirme pas ce témoin. Détail dans les étapes ci-dessous.' })));
+      element('p', { texte: 'Le recalcul ne confirme pas ce témoin : soit il a été ' +
+        'altéré, soit il est mal formé. Le détail étape par étape est ci-dessous.' })));
   } else if (ancrage.completes.length > 0) {
     const verdict = element('div', { class: 'verdict ok' },
       element('h2', { texte: 'Conforme à son témoin' }));
@@ -432,10 +761,11 @@ async function lancerVerification(texte) {
         : 'Aucune attestation de ce témoin n’est d’un type connu de cette page (v1 : "ots").');
     fragments.push(element('div', { class: 'verdict attente' },
       element('h2', { texte: 'Conforme à son témoin — aucune antériorité prouvée' }),
-      element('p', { texte: raison })));
+      element('p', { texte: 'Les calculs sont justes, mais rien ne relie encore ce ' +
+        'témoin à la blockchain. ' + raison })));
   }
 
-  // Étapes.
+  // Étapes, chacune avec sa phrase d'explication.
   const liste = element('ol', { class: 'etapes' });
   for (const etape of etapes) {
     const item = element('li', {},
@@ -443,22 +773,26 @@ async function lancerVerification(texte) {
         texte: etape.ok ? '✓ ' : '✗ ' }),
       etape.texte);
     if (etape.code) item.append(element('code', { texte: etape.code }));
+    if (etape.aide) item.append(element('span', { class: 'aide', texte: etape.aide }));
     liste.append(item);
   }
   if (conforme) {
     const item = element('li', {},
       element('span', { class: 'puce ' + (ancrage.completes.length > 0 ? 'ok' : 'neutre'),
         texte: ancrage.completes.length > 0 ? '✓ ' : '… ' }),
-      'Attestations : ' + ancrage.completes.length + ' complète(s), ' +
+      'Attestations d’ancrage : ' + ancrage.completes.length + ' complète(s), ' +
       ancrage.incompletes + ' incomplète(s), ' + ancrage.inconnues +
-      ' de type inconnu (ignorée(s)).');
+      ' de type inconnu (ignorée(s)).',
+      element('span', { class: 'aide',
+        texte: 'Une attestation complète désigne le bloc Bitcoin où la racine est ' +
+          'ancrée — c’est elle qui apporte la preuve d’antériorité.' }));
     liste.append(item);
   }
   fragments.push(liste);
 
   // Données scellées, lisibles.
   const bloc = element('details', {},
-    element('summary', { texte: 'Données scellées (champ canonique)' }));
+    element('summary', { texte: 'Voir les données scellées (champ canonique)' }));
   let joli = temoin.canonique;
   try { joli = JSON.stringify(JSON.parse(temoin.canonique), null, 2); } catch (_erreur) { /* telle quelle */ }
   bloc.append(element('pre', { texte: joli }));
