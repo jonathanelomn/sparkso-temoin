@@ -66,6 +66,16 @@ montrer la page dans son thème courant). Le volet « Le parcours d'un
 témoin » sert de tableau de suivi : le tenir à jour à chaque brique
 livrée.
 
+## Documentation vivante (docs/)
+
+Même convention que sparkso-universites : `docs/guide-utilisateur.md`,
+`docs/plan-de-test.md`, `docs/securite-donnees.md`, plus un document
+d'avancements par mois (`docs/avancements-AAAA-MM.md`, à créer s'il
+n'existe pas). **Toute évolution notable est consignée dans le document
+d'avancements du mois au moment où elle est livrée**, et met à jour le
+guide, le plan de test ou la sécurité si elle les concerne. Rédaction
+pédagogique, comme le reste.
+
 ## Frontière stricte
 
 Dans ce dépôt : canonique, hachage salé, Merkle, témoin, ancrage,

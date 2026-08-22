@@ -33,6 +33,7 @@ cli/                 ancrer / completer / verifier / temoin
 verifieur/           page statique auto-suffisante (un fichier HTML par langue,
                      testée sur téléphone — voir verifieur/MOBILE.md)
 exemples/            fichiers d'essai et leurs témoins
+docs/                guide utilisateur, plan de test, sécurité, avancements
 ```
 
 ## Frontière du projet
