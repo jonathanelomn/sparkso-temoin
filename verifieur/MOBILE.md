@@ -83,9 +83,14 @@ mais visiblement accidentelle.
 
 Correction : une **media query** — une règle de style conditionnelle, qui
 ne s'applique que si l'écran remplit une condition, ici « largeur au plus
-520 points » — transforme la pilule en **menu vertical pleine largeur** :
-un bouton par ligne, aligné à gauche, l'onglet actif surligné. Plus
-lisible, et des zones de toucher plus grandes donc plus sûres au doigt.
+520 points » — garde la pilule sur **une seule ligne, qui glisse
+latéralement au doigt** (le motif habituel des applications mobiles).
+La pilule suivante, coupée au bord de l'écran, signale d'elle-même qu'il
+y a plus à droite ; et quand on touche un onglet, il se recentre de
+lui-même (en respectant le réglage « réduire les animations » de
+l'appareil). Une première version en menu vertical, essayée puis montrée
+sur un vrai téléphone, occupait quatre lignes d'écran pour un bénéfice
+moindre : la rangée glissante lui a été préférée.
 
 ### 2. Safari sur iPhone zoomait de force dans le champ de collage
 
@@ -120,6 +125,29 @@ mobile : libellés tactiles bien affichés, champ à 16 px, menu d'onglets
 propre, toujours aucun débordement ni erreur, verdict de l'exemple
 inchangé dans les deux langues.
 
+## Retours du premier test sur un vrai téléphone
+
+Le soir même, un test sur iPhone réel a apporté trois enseignements que
+la simulation n'avait pas donnés :
+
+1. **Un aperçu de fichier n'est pas un navigateur.** Ouverte dans
+   l'aperçu de pièce jointe d'une application de messagerie ou de
+   discussion, la page s'affiche mais son JavaScript est bloqué par le
+   bac à sable de sécurité de l'aperçu : rien ne réagit au toucher. Ce
+   n'est pas un défaut de la page — pour tester ou utiliser le
+   vérifieur, il faut l'ouvrir dans un vrai navigateur (ou tout export
+   statique qui la sert telle quelle).
+2. **Chaque volet ouvre désormais sur un titre.** Trois volets
+   commençaient par un titre de section, le volet « Vérifier un
+   témoin » non : l'incohérence se voyait immédiatement en passant de
+   l'un à l'autre. Il a reçu le sien (« Votre témoin, vérifié ici
+   même »).
+3. **Le menu vertical a cédé la place à une rangée glissante.** La
+   première correction des onglets (menu vertical) fonctionnait mais
+   occupait quatre lignes d'écran ; à l'usage, la rangée d'onglets sur
+   une ligne, qui glisse au doigt, s'est révélée plus élégante — voir
+   le défaut n° 1 ci-dessus, décrit dans sa forme finale.
+
 ## Ce qui reste volontairement hors de portée
 
 Rien de nouveau : comme sur ordinateur, la page recalcule l'empreinte et
@@ -133,7 +161,8 @@ la portée v1 assumée, indépendante de l'appareil.
 outils de développement d'un navigateur de bureau) :
 
 1. ouvrir la page, parcourir les quatre volets : rien ne doit défiler de
-   côté, la barre d'onglets doit être un menu vertical ;
+   côté ; la barre d'onglets tient sur une ligne et glisse au doigt,
+   l'onglet touché se recentrant tout seul ;
 2. dans « Vérifier un témoin », lire les libellés : ils doivent dire
    « touchez », pas « cliquez » ;
 3. toucher le champ de collage : la page ne doit pas zoomer (iPhone) ;

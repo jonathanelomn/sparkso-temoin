@@ -82,15 +82,18 @@
   nav.onglets button[aria-selected="true"] {
     background: var(--encre); color: var(--fond);
   }
-  /* Narrow screens (phones): the horizontal pill, wrapping onto four
-     lines, turned into a misshapen bubble — the tabs become a vertical
-     full-width menu, easier to read and to tap. */
+  /* Narrow screens (phones): the pill stays on a single line that
+     slides sideways under the finger (the usual mobile-app pattern);
+     the tapped tab recenters itself, and the next pill, cut at the
+     edge, signals there is more to the right. */
   @media (max-width: 520px) {
     nav.onglets {
-      display: flex; flex-direction: column; align-items: stretch;
-      width: 100%; border-radius: 18px; gap: .15rem;
+      display: flex; flex-wrap: nowrap; max-width: 100%;
+      overflow-x: auto; scrollbar-width: none;
+      -webkit-overflow-scrolling: touch;
     }
-    nav.onglets button { text-align: left; padding: .65rem 1rem; border-radius: 12px; }
+    nav.onglets::-webkit-scrollbar { display: none; }
+    nav.onglets button { flex: none; white-space: nowrap; }
   }
   /* On touch, "click" makes no sense: each affected label exists in two
      versions and the stylesheet shows the right one
@@ -246,6 +249,7 @@
 
   <!-- ================== TAB: VERIFY ================== -->
   <section id="volet-verifier">
+    <h2>Your witness, verified right here</h2>
     <p class="note">
       All computation happens in your browser (Web Crypto API).
       <strong>Nothing is sent anywhere</strong>: you can confirm this in
@@ -578,8 +582,8 @@
       <h3>The page on phones <span class="badge fait">Done — 22 August 2026</span></h3>
       <p>
         The verifier was audited and then tuned for smartphones — the
-        primary screen of its audience: a vertical tab menu on narrow
-        screens, labels that say "tap" on touch screens (and "click"
+        primary screen of its audience: a single-line tab bar that
+        slides under the finger, labels that say "tap" on touch screens (and "click"
         with a mouse), and removal of Safari's forced zoom on iPhone in
         the paste field. The full journey — load the example, recompute,
         read the verdict — was replayed in a mobile browser, in both
@@ -826,6 +830,11 @@ function afficherVolet(identifiant) {
     const actif = onglet.dataset.volet === identifiant;
     onglet.setAttribute('aria-selected', String(actif));
     document.getElementById(onglet.dataset.volet).hidden = !actif;
+    // On phones the tab bar scrolls: recenter the active tab.
+    if (actif) onglet.scrollIntoView({
+      behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
+      inline: 'center', block: 'nearest',
+    });
   }
 }
 for (const onglet of onglets) {

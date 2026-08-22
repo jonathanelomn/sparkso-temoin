@@ -96,15 +96,18 @@
   nav.onglets button[aria-selected="true"] {
     background: var(--encre); color: var(--fond);
   }
-  /* Écran étroit (téléphone) : la pilule horizontale, en se repliant sur
-     quatre lignes, formait une bulle difforme — les onglets deviennent
-     un menu vertical pleine largeur, plus lisible et plus sûr au doigt. */
+  /* Écran étroit (téléphone) : la pilule reste une seule ligne, qui
+     glisse latéralement au doigt (motif habituel des applications
+     mobiles) ; l'onglet touché se recentre de lui-même, et la pilule
+     suivante, coupée au bord, signale qu'il y a plus à droite. */
   @media (max-width: 520px) {
     nav.onglets {
-      display: flex; flex-direction: column; align-items: stretch;
-      width: 100%; border-radius: 18px; gap: .15rem;
+      display: flex; flex-wrap: nowrap; max-width: 100%;
+      overflow-x: auto; scrollbar-width: none;
+      -webkit-overflow-scrolling: touch;
     }
-    nav.onglets button { text-align: left; padding: .65rem 1rem; border-radius: 12px; }
+    nav.onglets::-webkit-scrollbar { display: none; }
+    nav.onglets button { flex: none; white-space: nowrap; }
   }
   /* Au doigt, « cliquer » n'a pas de sens : chaque libellé concerné
      existe en deux versions, la feuille de style affiche la bonne
@@ -263,6 +266,7 @@
 
   <!-- ================== VOLET : VÉRIFIER ================== -->
   <section id="volet-verifier">
+    <h2>Votre témoin, vérifié ici même</h2>
     <p class="note">
       Tout le calcul se fait dans votre navigateur (API Web Crypto).
       <strong>Rien n'est envoyé nulle part</strong> : vous pouvez le constater
@@ -590,8 +594,8 @@
       <h3>La page sur téléphone <span class="badge fait">Fait — 22 août 2026</span></h3>
       <p>
         Le vérifieur a été audité puis ajusté pour les smartphones —
-        l'écran principal du public visé : menu d'onglets vertical sur
-        écran étroit, libellés qui disent « touchez » sur écran tactile
+        l'écran principal du public visé : barre d'onglets sur une seule
+        ligne qui glisse au doigt, libellés qui disent « touchez » sur écran tactile
         (et « cliquez » à la souris), suppression du zoom forcé de Safari
         sur iPhone dans le champ de collage. Le parcours complet —
         charger l'exemple, recalculer, lire le verdict — a été rejoué
@@ -846,6 +850,11 @@ function afficherVolet(identifiant) {
     const actif = onglet.dataset.volet === identifiant;
     onglet.setAttribute('aria-selected', String(actif));
     document.getElementById(onglet.dataset.volet).hidden = !actif;
+    // Sur téléphone la barre d'onglets défile : on recentre l'actif.
+    if (actif) onglet.scrollIntoView({
+      behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
+      inline: 'center', block: 'nearest',
+    });
   }
 }
 for (const onglet of onglets) {
