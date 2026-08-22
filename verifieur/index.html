@@ -26,80 +26,107 @@
   Spécification : SPEC.md du dépôt sparkso-temoin (format du témoin v1).
 -->
 <style>
+  /* Identité visuelle : registre notarial — parchemin, encre chaude,
+     rouge « cire à cacheter ». Volontairement distincte des interfaces
+     applicatives des projets consommateurs. */
   :root {
-    --fond: #ffffff; --encre: #1a1d21; --sourdine: #5b6470;
-    --cadre: #d5dae1; --panneau: #f5f7f9;
-    --ok: #1a7f37; --ok-fond: #e6f4ea;
-    --attente: #9a6700; --attente-fond: #fff8e1;
-    --echec: #b42318; --echec-fond: #fdecea;
-    --accent: #0b57d0; --mono-fond: #eef1f4;
+    --fond: #f6f1e5; --encre: #2b241a; --sourdine: #7a6f5c;
+    --cadre: #d3c8b0; --panneau: #efe8d7;
+    --ok: #3e6b34; --ok-fond: #e7edda;
+    --attente: #8a6210; --attente-fond: #f3e8c8;
+    --echec: #8c2f24; --echec-fond: #f1ddd6;
+    --accent: #8c2f24; --lien: #6b4f1d; --mono-fond: #eae2cd;
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "Times New Roman", serif;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   }
   @media (prefers-color-scheme: dark) {
     :root {
-      --fond: #14171a; --encre: #e8eaed; --sourdine: #9aa3ad;
-      --cadre: #3a4048; --panneau: #1c2126;
-      --ok: #4ccb70; --ok-fond: #10301b;
-      --attente: #e2b93b; --attente-fond: #33290e;
-      --echec: #ff7a6e; --echec-fond: #3a1512;
-      --accent: #8ab4f8; --mono-fond: #22272c;
+      --fond: #1b1712; --encre: #e9e1d2; --sourdine: #a2957e;
+      --cadre: #4a4133; --panneau: #241f18;
+      --ok: #8fbf7a; --ok-fond: #26301c;
+      --attente: #d9b35a; --attente-fond: #362b10;
+      --echec: #e08573; --echec-fond: #3c1f18;
+      --accent: #e08573; --lien: #cda45e; --mono-fond: #2b2519;
     }
   }
   * { box-sizing: border-box; }
   body {
     margin: 0; background: var(--fond); color: var(--encre);
-    font: 16px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    font: 17px/1.65 var(--serif);
   }
-  main { max-width: 48rem; margin: 0 auto; padding: 2rem 1rem 4rem; }
-  h1 { font-size: 1.5rem; margin: 0 0 .25rem; }
-  h2 { font-size: 1.2rem; margin: 1.8rem 0 .6rem; }
-  h3 { font-size: 1.02rem; margin: 1.2rem 0 .35rem; }
-  .sous-titre { color: var(--sourdine); margin: 0 0 1.25rem; }
-  .note { color: var(--sourdine); font-size: .875rem; }
+  main { max-width: 46rem; margin: 0 auto; padding: 2.2rem 1.1rem 4rem; }
+  .entete { display: flex; gap: 1.1rem; align-items: flex-start; }
+  .sceau {
+    flex: none; width: 3.4rem; height: 3.4rem; margin-top: .3rem;
+    border: 2px solid var(--accent); outline: 1px solid var(--accent);
+    outline-offset: 3px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--accent); font-size: 1.5rem;
+    transform: rotate(-8deg);
+  }
+  .surtitre {
+    font-family: var(--sans); font-size: .72rem; font-weight: 700;
+    letter-spacing: .22em; text-transform: uppercase;
+    color: var(--accent); margin: 0 0 .2rem;
+  }
+  h1 { font-size: 1.85rem; line-height: 1.2; margin: 0 0 .35rem; font-weight: 600; }
+  h2 {
+    font-size: 1.3rem; margin: 2rem 0 .6rem; font-weight: 600;
+    border-bottom: 1px solid var(--cadre); padding-bottom: .25rem;
+  }
+  h3 { font-size: 1.08rem; margin: 1.2rem 0 .35rem; font-weight: 600; }
+  .sous-titre { color: var(--sourdine); margin: 0 0 1.25rem; font-style: italic; }
+  .note { color: var(--sourdine); font-size: .9rem; }
   code, .mono {
     font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
     font-size: .8125rem; background: var(--mono-fond);
     border-radius: 4px; padding: .05rem .3rem; overflow-wrap: anywhere;
   }
   nav.onglets {
-    display: flex; gap: .4rem; flex-wrap: wrap;
-    border-bottom: 1px solid var(--cadre); margin: 1.2rem 0 1.6rem;
+    display: flex; gap: .3rem; flex-wrap: wrap;
+    border-bottom: 3px double var(--cadre); margin: 1.4rem 0 1.7rem;
   }
   nav.onglets button {
-    font: inherit; font-weight: 600; color: var(--sourdine);
+    font-family: var(--sans); font-size: .78rem; font-weight: 700;
+    letter-spacing: .13em; text-transform: uppercase; color: var(--sourdine);
     background: none; border: none; border-bottom: 3px solid transparent;
-    padding: .5rem .8rem; cursor: pointer; border-radius: 0;
+    padding: .55rem .8rem .5rem; cursor: pointer; border-radius: 0;
   }
   nav.onglets button[aria-selected="true"] {
     color: var(--accent); border-bottom-color: var(--accent);
   }
   .carte {
-    border: 1px solid var(--cadre); border-radius: 10px;
-    padding: .9rem 1.1rem; margin: .8rem 0; background: var(--panneau);
+    border: 1px solid var(--cadre); border-radius: 2px;
+    padding: .9rem 1.1rem; margin: .9rem 0; background: var(--panneau);
+    box-shadow: inset 0 0 0 3px var(--fond), inset 0 0 0 4px var(--cadre);
+    padding: 1.1rem 1.3rem;
   }
   .carte h3 { margin-top: 0; }
   .carte p { margin: .4rem 0; }
   .depot {
-    border: 2px dashed var(--cadre); border-radius: 10px;
-    padding: 1.5rem; text-align: center; cursor: pointer;
-    transition: border-color .15s, background .15s;
+    border: 1px solid var(--cadre); outline: 1px solid var(--cadre);
+    outline-offset: 5px; border-radius: 2px; margin: 0 6px;
+    padding: 1.6rem; text-align: center; cursor: pointer;
+    transition: border-color .15s, outline-color .15s, background .15s;
   }
-  .depot.survol { border-color: var(--accent); background: var(--panneau); }
+  .depot.survol { border-color: var(--accent); outline-color: var(--accent); background: var(--panneau); }
   .depot p { margin: .25rem 0; }
   textarea {
-    width: 100%; min-height: 7rem; margin-top: 1rem; padding: .6rem;
-    border: 1px solid var(--cadre); border-radius: 8px; resize: vertical;
+    width: 100%; min-height: 7rem; margin-top: 1.2rem; padding: .6rem;
+    border: 1px solid var(--cadre); border-radius: 2px; resize: vertical;
     background: var(--panneau); color: var(--encre);
     font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: .8125rem;
   }
   .actions { display: flex; gap: .6rem; flex-wrap: wrap; margin-top: .6rem; }
   button {
-    font: inherit; padding: .45rem .9rem; border-radius: 8px; cursor: pointer;
+    font-family: var(--sans); font-size: .82rem; font-weight: 600;
+    letter-spacing: .04em; padding: .5rem 1rem; border-radius: 2px; cursor: pointer;
     border: 1px solid var(--cadre); background: var(--panneau); color: var(--encre);
   }
   button.principal { background: var(--accent); border-color: var(--accent); color: var(--fond); }
   #resultat { margin-top: 2rem; }
-  .verdict { border-radius: 10px; padding: 1rem 1.2rem; margin-bottom: 1rem; }
-  .verdict h2 { margin: 0 0 .3rem; font-size: 1.1rem; }
+  .verdict { border-radius: 2px; padding: 1rem 1.2rem; margin-bottom: 1rem; }
+  .verdict h2 { margin: 0 0 .3rem; font-size: 1.1rem; border: none; padding: 0; }
   .verdict p { margin: .2rem 0; }
   .verdict.ok { background: var(--ok-fond); border: 1px solid var(--ok); }
   .verdict.ok h2 { color: var(--ok); }
@@ -114,13 +141,13 @@
   .puce.ok { color: var(--ok); }
   .puce.echec { color: var(--echec); }
   .puce.neutre { color: var(--attente); }
-  details { margin: .75rem 0; border: 1px solid var(--cadre); border-radius: 8px; padding: .5rem .8rem; }
+  details { margin: .75rem 0; border: 1px solid var(--cadre); border-radius: 2px; padding: .5rem .8rem; }
   summary { cursor: pointer; font-weight: 600; }
   pre {
-    background: var(--mono-fond); border-radius: 8px; padding: .7rem;
+    background: var(--mono-fond); border-radius: 2px; padding: .7rem;
     overflow-x: auto; font-size: .8125rem; line-height: 1.5;
   }
-  a { color: var(--accent); }
+  a { color: var(--lien); text-decoration-color: var(--cadre); text-underline-offset: 2px; }
   .liens-bloc { display: flex; gap: .8rem; flex-wrap: wrap; margin-top: .4rem; }
   ol.parcours { padding-left: 0; list-style: none; counter-reset: temps; }
   ol.parcours > li {
@@ -130,14 +157,18 @@
   ol.parcours > li::before {
     content: counter(temps); position: absolute; left: -1.15rem; top: -.15rem;
     width: 2.1rem; height: 2.1rem; border-radius: 50%;
-    background: var(--accent); color: var(--fond); font-weight: 700;
+    background: var(--fond); color: var(--accent); font-weight: 700;
+    border: 2px solid var(--accent); box-shadow: 0 0 0 1px var(--fond) inset,
+      0 0 0 3px color-mix(in srgb, var(--accent) 35%, transparent);
     display: flex; align-items: center; justify-content: center;
+    font-family: var(--serif);
   }
   ol.parcours > li:last-child { border-left-color: transparent; }
   ol.parcours strong.titre { display: block; margin-bottom: .15rem; }
   .badge {
-    display: inline-block; font-size: .75rem; font-weight: 700;
-    border-radius: 99px; padding: .1rem .6rem; vertical-align: middle;
+    display: inline-block; font-family: var(--sans); font-size: .68rem;
+    font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
+    border-radius: 2px; padding: .12rem .55rem; vertical-align: middle;
   }
   .badge.fait { background: var(--ok-fond); color: var(--ok); border: 1px solid var(--ok); }
   .badge.avenir { background: var(--attente-fond); color: var(--attente); border: 1px solid var(--attente); }
@@ -147,11 +178,17 @@
 </head>
 <body>
 <main>
-  <h1>Témoins d'ancrage public</h1>
-  <p class="sous-titre">
-    Comprendre, suivre et vérifier des états certifiés par ancrage public —
-    sans avoir à croire la plateforme qui les a émis.
-  </p>
+  <header class="entete">
+    <div class="sceau" aria-hidden="true">⚓</div>
+    <div>
+      <p class="surtitre">sparkso-temoin · registre de preuves</p>
+      <h1>Témoins d'ancrage public</h1>
+      <p class="sous-titre">
+        Comprendre, suivre et vérifier des états certifiés par ancrage public —
+        sans avoir à croire la plateforme qui les a émis.
+      </p>
+    </div>
+  </header>
 
   <nav class="onglets" role="tablist">
     <button role="tab" aria-selected="true" data-volet="volet-verifier">Vérifier un témoin</button>
