@@ -71,3 +71,21 @@ la SPEC v1 reste intacte et rien ne s'implémente avant validation.
   utilisateur, plan de test, sécurité des données, avancements), sur le
   modèle de Sparkso Universités, avec sa règle de tenue à jour dans le
   CLAUDE.md du dépôt.
+
+## 6. Le projet devient Sparkso Certification (24 août)
+
+Le nom « Sparkso Témoin » restait fidèle au mécanisme mais parlait mal
+au public visé, et « Witness » ne portait rien en anglais. Le produit
+s'appelle désormais **Sparkso Certification** : le mot est identique en
+français et en anglais, et il nomme le bénéfice (des états certifiés)
+plutôt que le rouage. Renommés : le répertoire de travail
+(`~/sparkso-certification`), le nom npm dans `package.json`, le titre du
+README et la marque affichée en tête du vérifieur (`verifieur/`).
+
+Le vocabulaire technique ne change pas : le reçu remis lors d'un
+scellement reste **un témoin**, la SPEC et la CLI (`temoin`) restent
+telles quelles. Seule la marque produit change.
+
+Le site vitrine [sparkso.build](https://sparkso.build) présente le
+produit sous son nouveau nom, avec de vraies captures du vérifieur
+(accueil et résultat de vérification de l'exemple de la SPEC).

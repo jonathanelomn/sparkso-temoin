@@ -1,5 +1,5 @@
 {
-  "name": "sparkso-temoin",
+  "name": "sparkso-certification",
   "version": "0.1.0",
   "description": "États certifiés par ancrage public : empreintes salées, arbre de Merkle, témoins vérifiables par quiconque (OpenTimestamps sur Bitcoin).",
   "type": "module",
