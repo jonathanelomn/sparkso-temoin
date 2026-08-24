@@ -1,6 +1,6 @@
 # Avancements — août 2026
 
-Ce document résume les avancements de sparkso-temoin, période par
+Ce document résume les avancements de sparkso-certification, période par
 période, dans l'esprit du document homonyme de Sparkso Universités :
 chaque section dit ce qui change concrètement. Il est tenu à jour **à
 chaque évolution notable** ; un nouveau fichier est ouvert chaque mois

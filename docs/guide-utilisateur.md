@@ -1,4 +1,4 @@
-# Guide utilisateur — sparkso-temoin
+# Guide utilisateur — sparkso-certification
 
 Ce guide s'adresse d'abord à la personne qui **détient un témoin** (un
 étudiant, une famille, un employeur qui a reçu le fichier) ; sa

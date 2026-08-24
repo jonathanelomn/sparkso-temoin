@@ -1,4 +1,4 @@
-# Le lot d'extraction — le pont entre une plateforme et sparkso-temoin
+# Le lot d'extraction — le pont entre une plateforme et sparkso-certification
 
 Ce document définit **comment une plateforme** (Sparkso Universités pour
 l'IUGM, ou n'importe quel autre projet) **prépare ses données à sceller**,
@@ -6,8 +6,8 @@ et **où** cela doit vivre chez elle. Il complète [SPEC.md](SPEC.md) : la
 spec dit ce qu'est un témoin ; ce document dit comment on alimente le
 système, simplement et toujours de la même façon.
 
-Rappel de la frontière : sparkso-temoin ne connaît rien du métier. C'est
-la plateforme qui choisit **quoi** sceller et **quand** ; sparkso-temoin
+Rappel de la frontière : sparkso-certification ne connaît rien du métier. C'est
+la plateforme qui choisit **quoi** sceller et **quand** ; sparkso-certification
 reçoit des enregistrements, rend des témoins.
 
 ## 1. Le fichier « lot d'extraction »
@@ -36,7 +36,7 @@ clic. Sa forme :
   dates en ISO 8601 UTC, **aucun nombre à virgule** (écrire `"12.50"` ou
   des centimes entiers), pas de clés dupliquées. C'est la seule
   contrainte que la plateforme doit respecter — le reste (mise en forme
-  canonique, sels, arbre, ancrage) est le travail de sparkso-temoin.
+  canonique, sels, arbre, ancrage) est le travail de sparkso-certification.
 
 Le contenu des enregistrements appartient à la plateforme. Deux conseils :
 
@@ -48,7 +48,7 @@ Le contenu des enregistrements appartient à la plateforme. Deux conseils :
 
 ## 2. Ce que la plateforme reçoit en retour
 
-Pour un lot de N enregistrements, sparkso-temoin rend :
+Pour un lot de N enregistrements, sparkso-certification rend :
 
 - **N sels** (un par enregistrement) — secrets, à stocker avec les
   données, à détruire avec elles (droit à l'effacement, spec §10) ;
@@ -110,7 +110,7 @@ lit tels quels. Ils ne se traduisent jamais ; seules les interfaces
 
 ## 4. Le trajet complet, en une ligne
 
-Plateforme : produit `extractions/<lot>.json` → sparkso-temoin (CLI) :
+Plateforme : produit `extractions/<lot>.json` → sparkso-certification (CLI) :
 émet sels + témoins, ancre la racine, complète la preuve → plateforme :
 range sels et preuves, remet les témoins → quiconque : vérifie sur la
 page publique.

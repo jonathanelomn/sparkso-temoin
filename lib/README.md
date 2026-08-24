@@ -16,7 +16,7 @@ Node). Chaque fichier porte une notion, expliquée en tête de fichier :
 Usage type :
 
 ```js
-import { emettre, verifier, ajouterAttestation } from 'sparkso-temoin';
+import { emettre, verifier, ajouterAttestation } from 'sparkso-certification';
 
 // Émettre : un lot d'enregistrements → une racine à ancrer + un témoin chacun.
 const { racine, temoins } = emettre([{ note: 17 }, { note: 12 }]);

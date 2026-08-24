@@ -1,4 +1,4 @@
-# Plan de test — sparkso-temoin
+# Plan de test — sparkso-certification
 
 Comment ce projet se vérifie, à trois étages : tests automatiques,
 test grandeur nature, tests manuels de la page. Et la règle d'or qui

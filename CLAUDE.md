@@ -1,4 +1,4 @@
-# sparkso-temoin — consignes pour Claude
+# sparkso-certification — consignes pour Claude
 
 ## Ce qu'est ce projet
 

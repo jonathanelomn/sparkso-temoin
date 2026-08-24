@@ -1,4 +1,4 @@
-# Sécurité des données — sparkso-temoin
+# Sécurité des données — sparkso-certification
 
 Ce que le système garantit, ce qu'il ne garantit pas, où vivent les
 secrets, et les menaces auxquelles la conception répond. En langage
@@ -81,6 +81,6 @@ Conséquences pratiques :
 ## 7. Signaler un problème
 
 Une faiblesse trouvée dans la spécification, la bibliothèque ou la
-page ? Ouvrir une issue sur le dépôt GitHub (jonathanelomn/sparkso-temoin)
+page ? Ouvrir une issue sur le dépôt GitHub (jonathanelomn/sparkso-certification)
 en donnant le scénario ; pour un sujet sensible, contacter directement
 le mainteneur plutôt que publier le détail.
